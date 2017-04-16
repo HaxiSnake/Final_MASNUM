@@ -1,0 +1,89 @@
+
+! =================================================================================== 
+! <<Automatically generated for Rose Fortran Separate Compilation, DO NOT MODIFY IT>> 
+! =================================================================================== 
+
+MODULE wamcor_mod
+!-------------------------------------------------------------------------------
+USE time_mod
+USE wamvar_mod
+USE wamfio_mod
+USE wamcpl_mod
+!  use wamnst_mod
+IMPLICIT NONE
+!-------------------------------------------------------------------------------
+public precom,readwi
+public implsch,propagat,mean1,setspec
+private 
+!-------------------------------------------------------------------------------
+CONTAINS
+SUBROUTINE precom()
+INTEGER :: ncid
+END SUBROUTINE precom
+
+SUBROUTINE readwi()
+REAL :: n, a
+REAL, DIMENSION(:,:,:,:), ALLOCATABLE :: em
+END SUBROUTINE readwi
+
+SUBROUTINE propagat()
+INTEGER :: j, k, i, iyyz, ixx, jyy, ixx1, jyy1, iwk, iwk1, i1, jth, jth1
+REAL :: x0, y0, d0, dddx0, dddy0, duxdx0, duxdy0, duydy0, duydx0, th0
+REAL :: sinth, costh, wk0, ws0, dk0, cg, cgx, cgy
+REAL :: xx, yy, x1, x2, y1, y2, dsidd
+REAL :: ssr1, ssr2, ssrwk, ssrth, wks, fien, fien1, wk1, wk2, dtth0, ths
+REAL :: e11, e12, e13, e14, e1, e21, e22, e23, e24, e2
+REAL :: e32, e33, e34, e3, e41, e42, e43, e44, e4, e31
+REAL :: th1, th2, exxyy, x_d, y_d
+REAL :: dx, dy
+INTEGER :: iii
+END SUBROUTINE propagat
+
+SUBROUTINE implsch()
+REAL :: awkss, vx, vy, ww, wkpm, wkpmt, wakt, beta
+REAL :: xx, wp11, wp12, wp21, wp22, wm11, wm12, wm21, wm22
+REAL :: wp112, wp122, wp212, wp222, wm112, wm122, wm212, wm222, ffacp, ffacp1
+REAL :: cwks17, rij, eij, ea1, ea2, ea3, ea4, ea5, ea6, ea7, ea8, up, up1
+REAL :: um, um1, sap, sam, eij2, zua, ead1, ead2, fcen, ad, adp, adm, delad
+REAL :: deladm, cd, theta0, costh, sinth, wl, wlstar, wk0, wf0, ws0, bett
+REAL :: awfss, arkss, aess, eks, ekspm, sds, asiss, ssds, d0, dk, ssbo, duxdx0
+REAL :: duydx0, duydy0, th0, cost2, sint2, cg, cp, cgdc, cu1, cu2, cu3, sscu
+REAL :: wstar, deltee, eef, gadiag, eefab, amax1, sig, deladp, duxdy0
+INTEGER :: kpmt, kakt, ks1, ks, ksp1, k, j, kh, ip, ip1, im, im1
+INTEGER :: kp, kp1, kp2, kp3, mr, js, j11, j12, j21, j22, i
+REAL :: sbo
+END SUBROUTINE implsch
+
+SUBROUTINE setspec(n)
+INTEGER, INTENT(IN) :: n
+REAL :: vx, vy, ww, xj, xj0, arlfa, wsj, wkj, theta0, sinth, costh, wk0, wf0, ws0, wl, sigma, alpha
+INTEGER :: j, k
+REAL, PARAMETER :: gama = 3.3
+REAL :: sq3
+END SUBROUTINE setspec
+
+SUBROUTINE mean1()
+INTEGER :: i, j, k, k1, i1
+REAL :: aets, aetc, thmax, akmax, eemax, eformax, dwkk, dwfk
+REAL :: wfk, wfk1, wsk, wsk1, wkk, wkk1, eef0, eekj, eekj1, eekjth
+REAL :: sinth, costh, aett, chbh
+REAL :: hmax, iahm, ichm
+END SUBROUTINE mean1
+
+SUBROUTINE mean2()
+INTEGER :: k, k1, i, i1, j
+REAL :: dwkk, wfk, wfk1, wsk, wsk1, wkk, wkk1, ekj, ekj1
+END SUBROUTINE mean2
+
+SUBROUTINE inter(u1,u2,v1,v2,aa,bb,cc,dd,xt,yt,value)
+REAL, INTENT(IN) :: u1, u2, v1, v2, aa, bb, cc, dd, xt, yt
+REAL, INTENT(OUT) :: value
+REAL :: dox, doy, yvalue, r, q, phia, phib, phic, phid
+END SUBROUTINE inter
+
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!###############################################################################
+END MODULE wamcor_mod
+

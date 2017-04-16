@@ -1,0 +1,926 @@
+
+! =================================================================================== 
+! <<Automatically generated for Rose Fortran Separate Compilation, DO NOT MODIFY IT>> 
+! =================================================================================== 
+
+MODULE ympi_mod
+!-------------------------------------------------------------------------------
+! ******************************************************************************
+!-------------------------------------------------------------------------------
+!                                                Copyright (C) 2005 Xunqiang Yin
+!                                                MODULE NAME : ympi_mod
+!                                                Current VERSION : 2011/10/19
+!
+! --- USAGE : Tools for parallel computation using MPI.
+! --- DEPEND: netcdf_mod developed by Xunqiang Yin.
+!
+! --- NOTE for describing of subroutine / function :
+!  A. The parameters bracketed with [], means optional parameter.
+!  B. The describe for the parameters of subroutine / function, started with:
+!   * It means input prameter;
+!   # It means output prameter;
+!   @ It means input and output prameter(it will be changed inside).
+!
+!-------------------------------------------------------------------------------
+! ******************************************************************************
+! ***                       INTERFACE DESCRIBE                               ***
+! ******************************************************************************
+!-------------------------------------------------------------------------------
+!
+!  1. subroutine ympi_init
+!     --- Initialize this module.
+!
+!-------------------------------------------------------------------------------
+!
+!  2. subroutine ympi_final
+!     --- Finalize this module.
+!
+!-------------------------------------------------------------------------------
+!
+!  3. subroutine init_pebox(filename, xname, yname, mname, n, myid)
+!     * character(len=*) :: filename = the name of grid file.
+!     * character(len=*) :: xname = the name of x-direction.
+!     * character(len=*) :: yname = the name of y-direction.
+!     * character(len=*) :: mname = the name of mask arrary.
+!     * integer          :: n = number of all PEs.
+!     * integer          :: myid = index of the current PE.
+!
+!-------------------------------------------------------------------------------
+!
+!  4. subroutine opennc(ncid, filename, action)
+!     # integer :: ncid = unit number of opened netcdf file.
+!     * character(len=*) :: filename = the name of netcdf file.
+!     * character :: action = 'create', 'define', 'write' or 'read'.
+!
+!-------------------------------------------------------------------------------
+!
+!  5. subroutine closenc(ncid)
+!     * integer :: ncid = unit number of opened netcdf file.
+!
+!-------------------------------------------------------------------------------
+!
+!  6. subroutine get_mpimin(x)
+!     @ integer/real/double precision :: x = the value need to get min.
+!
+!-------------------------------------------------------------------------------
+!
+!  7. subroutine bcast_to_all(x)
+!     @ integer/real/double precision :: x = the value need to be broadcasted.
+!
+!-------------------------------------------------------------------------------
+!
+!  8. subroutine updatev(ee, ixl, iyl[, kl[, jl]], halo[, flag])
+!     @ real(4/8) :: ee = the array need to be updated, could be 2d,3d & 4d.
+!     * integer :: ixl, iyl, kl, jl = is for the shape of ee.
+!     * integer :: halo = the size of halo in spatial partition.
+!     * flag = the flag for 4d direction of 4d array.
+!       --- If it is 4d & flag is given, the direction of dimensions is 
+!           (ixl, iyl, kl, jl), otherwise, it is (kl, jl, ixl, iyl)
+!       --- For 3d array, it is defined as ee(ixl, iyl, kl)
+!
+!-------------------------------------------------------------------------------
+!
+! --- Useful variables:
+!
+!     lon, lat, im, jm, halosize, flagxcycle, ixoverlay
+!     myid, npe, mypebox, loc2, loc3, loc4, is, ie, js, je
+!
+!-------------------------------------------------------------------------------
+!
+!                                                --- Xunqiang Yin, 2011/10/19
+!                                                 E-Mail: XunqiangYin@gmail.com
+!
+!-------------------------------------------------------------------------------
+! ******************************************************************************
+!-------------------------------------------------------------------------------
+USE netcdf_mod
+IMPLICIT NONE
+!-------------------------------------------------------------------------------
+public init_pebox,ympi_final,ympi_init
+public runbyturn,closenc,opennc,updatev,bcast_to_all,get_mpimin
+private 
+INTEGER, PRIVATE :: MPI_SOURCE, MPI_TAG, MPI_ERROR
+parameter(MPI_SOURCE = 3,MPI_TAG = 4,MPI_ERROR = 5) 
+INTEGER, PRIVATE :: MPI_STATUS_SIZE
+parameter(MPI_STATUS_SIZE = 5) 
+INTEGER, DIMENSION(MPI_STATUS_SIZE), PRIVATE :: MPI_STATUS_IGNORE
+INTEGER, DIMENSION(MPI_STATUS_SIZE,1), PRIVATE :: MPI_STATUSES_IGNORE
+INTEGER, DIMENSION(1), PRIVATE :: MPI_ERRCODES_IGNORE
+CHARACTER(len=1), DIMENSION(1,1), PRIVATE :: MPI_ARGVS_NULL
+CHARACTER(len=1), DIMENSION(1), PRIVATE :: MPI_ARGV_NULL
+INTEGER, PRIVATE :: MPI_SUCCESS
+parameter(MPI_SUCCESS = 0) 
+INTEGER, PRIVATE :: MPI_ERR_OTHER
+parameter(MPI_ERR_OTHER = 15) 
+INTEGER, PRIVATE :: MPI_ERR_COUNT
+parameter(MPI_ERR_COUNT = 2) 
+INTEGER, PRIVATE :: MPI_ERR_SPAWN
+parameter(MPI_ERR_SPAWN = 42) 
+INTEGER, PRIVATE :: MPI_ERR_LOCKTYPE
+parameter(MPI_ERR_LOCKTYPE = 47) 
+INTEGER, PRIVATE :: MPI_ERR_OP
+parameter(MPI_ERR_OP = 9) 
+INTEGER, PRIVATE :: MPI_ERR_DUP_DATAREP
+parameter(MPI_ERR_DUP_DATAREP = 24) 
+INTEGER, PRIVATE :: MPI_ERR_UNSUPPORTED_DATAREP
+parameter(MPI_ERR_UNSUPPORTED_DATAREP = 43) 
+INTEGER, PRIVATE :: MPI_ERR_TRUNCATE
+parameter(MPI_ERR_TRUNCATE = 14) 
+INTEGER, PRIVATE :: MPI_ERR_INFO_NOKEY
+parameter(MPI_ERR_INFO_NOKEY = 31) 
+INTEGER, PRIVATE :: MPI_ERR_ASSERT
+parameter(MPI_ERR_ASSERT = 53) 
+INTEGER, PRIVATE :: MPI_ERR_FILE_EXISTS
+parameter(MPI_ERR_FILE_EXISTS = 25) 
+INTEGER, PRIVATE :: MPI_ERR_PENDING
+parameter(MPI_ERR_PENDING = 18) 
+INTEGER, PRIVATE :: MPI_ERR_COMM
+parameter(MPI_ERR_COMM = 5) 
+INTEGER, PRIVATE :: MPI_ERR_KEYVAL
+parameter(MPI_ERR_KEYVAL = 48) 
+INTEGER, PRIVATE :: MPI_ERR_NAME
+parameter(MPI_ERR_NAME = 33) 
+INTEGER, PRIVATE :: MPI_ERR_REQUEST
+parameter(MPI_ERR_REQUEST = 19) 
+INTEGER, PRIVATE :: MPI_ERR_TYPE
+parameter(MPI_ERR_TYPE = 3) 
+INTEGER, PRIVATE :: MPI_ERR_INFO_VALUE
+parameter(MPI_ERR_INFO_VALUE = 30) 
+INTEGER, PRIVATE :: MPI_ERR_RMA_SYNC
+parameter(MPI_ERR_RMA_SYNC = 50) 
+INTEGER, PRIVATE :: MPI_ERR_NO_MEM
+parameter(MPI_ERR_NO_MEM = 34) 
+INTEGER, PRIVATE :: MPI_ERR_BAD_FILE
+parameter(MPI_ERR_BAD_FILE = 22) 
+INTEGER, PRIVATE :: MPI_ERR_QUOTA
+parameter(MPI_ERR_QUOTA = 39) 
+INTEGER, PRIVATE :: MPI_ERR_ROOT
+parameter(MPI_ERR_ROOT = 7) 
+INTEGER, PRIVATE :: MPI_ERR_SERVICE
+parameter(MPI_ERR_SERVICE = 41) 
+INTEGER, PRIVATE :: MPI_ERR_IO
+parameter(MPI_ERR_IO = 32) 
+INTEGER, PRIVATE :: MPI_ERR_RMA_FLAVOR
+parameter(MPI_ERR_RMA_FLAVOR = 58) 
+INTEGER, PRIVATE :: MPI_ERR_ACCESS
+parameter(MPI_ERR_ACCESS = 20) 
+INTEGER, PRIVATE :: MPI_ERR_NO_SPACE
+parameter(MPI_ERR_NO_SPACE = 36) 
+INTEGER, PRIVATE :: MPI_ERR_CONVERSION
+parameter(MPI_ERR_CONVERSION = 23) 
+INTEGER, PRIVATE :: MPI_ERR_WIN
+parameter(MPI_ERR_WIN = 45) 
+INTEGER, PRIVATE :: MPI_ERR_FILE
+parameter(MPI_ERR_FILE = 27) 
+INTEGER, PRIVATE :: MPI_ERR_RMA_SHARED
+parameter(MPI_ERR_RMA_SHARED = 57) 
+INTEGER, PRIVATE :: MPI_ERR_BASE
+parameter(MPI_ERR_BASE = 46) 
+INTEGER, PRIVATE :: MPI_ERR_RMA_CONFLICT
+parameter(MPI_ERR_RMA_CONFLICT = 49) 
+INTEGER, PRIVATE :: MPI_ERR_IN_STATUS
+parameter(MPI_ERR_IN_STATUS = 17) 
+INTEGER, PRIVATE :: MPI_ERR_INFO_KEY
+parameter(MPI_ERR_INFO_KEY = 29) 
+INTEGER, PRIVATE :: MPI_ERR_ARG
+parameter(MPI_ERR_ARG = 12) 
+INTEGER, PRIVATE :: MPI_ERR_READ_ONLY
+parameter(MPI_ERR_READ_ONLY = 40) 
+INTEGER, PRIVATE :: MPI_ERR_SIZE
+parameter(MPI_ERR_SIZE = 51) 
+INTEGER, PRIVATE :: MPI_ERR_BUFFER
+parameter(MPI_ERR_BUFFER = 1) 
+INTEGER, PRIVATE :: MPI_ERR_LASTCODE
+parameter(MPI_ERR_LASTCODE = 1073741823) 
+INTEGER, PRIVATE :: MPI_ERR_DISP
+parameter(MPI_ERR_DISP = 52) 
+INTEGER, PRIVATE :: MPI_ERR_PORT
+parameter(MPI_ERR_PORT = 38) 
+INTEGER, PRIVATE :: MPI_ERR_GROUP
+parameter(MPI_ERR_GROUP = 8) 
+INTEGER, PRIVATE :: MPI_ERR_TOPOLOGY
+parameter(MPI_ERR_TOPOLOGY = 10) 
+INTEGER, PRIVATE :: MPI_ERR_TAG
+parameter(MPI_ERR_TAG = 4) 
+INTEGER, PRIVATE :: MPI_ERR_NOT_SAME
+parameter(MPI_ERR_NOT_SAME = 35) 
+INTEGER, PRIVATE :: MPI_ERR_INFO
+parameter(MPI_ERR_INFO = 28) 
+INTEGER, PRIVATE :: MPI_ERR_UNKNOWN
+parameter(MPI_ERR_UNKNOWN = 13) 
+INTEGER, PRIVATE :: MPI_ERR_FILE_IN_USE
+parameter(MPI_ERR_FILE_IN_USE = 26) 
+INTEGER, PRIVATE :: MPI_ERR_RMA_ATTACH
+parameter(MPI_ERR_RMA_ATTACH = 56) 
+INTEGER, PRIVATE :: MPI_ERR_UNSUPPORTED_OPERATION
+parameter(MPI_ERR_UNSUPPORTED_OPERATION = 44) 
+INTEGER, PRIVATE :: MPI_ERR_AMODE
+parameter(MPI_ERR_AMODE = 21) 
+INTEGER, PRIVATE :: MPI_ERR_RANK
+parameter(MPI_ERR_RANK = 6) 
+INTEGER, PRIVATE :: MPI_ERR_DIMS
+parameter(MPI_ERR_DIMS = 11) 
+INTEGER, PRIVATE :: MPI_ERR_NO_SUCH_FILE
+parameter(MPI_ERR_NO_SUCH_FILE = 37) 
+INTEGER, PRIVATE :: MPI_ERR_RMA_RANGE
+parameter(MPI_ERR_RMA_RANGE = 55) 
+INTEGER, PRIVATE :: MPI_ERR_INTERN
+parameter(MPI_ERR_INTERN = 16) 
+INTEGER, PRIVATE :: MPI_ERRORS_ARE_FATAL
+parameter(MPI_ERRORS_ARE_FATAL = 1409286144) 
+INTEGER, PRIVATE :: MPI_ERRORS_RETURN
+parameter(MPI_ERRORS_RETURN = 1409286145) 
+INTEGER, PRIVATE :: MPI_IDENT
+parameter(MPI_IDENT = 0) 
+INTEGER, PRIVATE :: MPI_CONGRUENT
+parameter(MPI_CONGRUENT = 1) 
+INTEGER, PRIVATE :: MPI_SIMILAR
+parameter(MPI_SIMILAR = 2) 
+INTEGER, PRIVATE :: MPI_UNEQUAL
+parameter(MPI_UNEQUAL = 3) 
+INTEGER, PRIVATE :: MPI_WIN_FLAVOR_CREATE
+parameter(MPI_WIN_FLAVOR_CREATE = 1) 
+INTEGER, PRIVATE :: MPI_WIN_FLAVOR_ALLOCATE
+parameter(MPI_WIN_FLAVOR_ALLOCATE = 2) 
+INTEGER, PRIVATE :: MPI_WIN_FLAVOR_DYNAMIC
+parameter(MPI_WIN_FLAVOR_DYNAMIC = 3) 
+INTEGER, PRIVATE :: MPI_WIN_FLAVOR_SHARED
+parameter(MPI_WIN_FLAVOR_SHARED = 4) 
+INTEGER, PRIVATE :: MPI_WIN_SEPARATE
+parameter(MPI_WIN_SEPARATE = 1) 
+INTEGER, PRIVATE :: MPI_WIN_UNIFIED
+parameter(MPI_WIN_UNIFIED = 2) 
+INTEGER, PRIVATE :: MPI_MAX
+parameter(MPI_MAX = 1476395009) 
+INTEGER, PRIVATE :: MPI_MIN
+parameter(MPI_MIN = 1476395010) 
+INTEGER, PRIVATE :: MPI_SUM
+parameter(MPI_SUM = 1476395011) 
+INTEGER, PRIVATE :: MPI_PROD
+parameter(MPI_PROD = 1476395012) 
+INTEGER, PRIVATE :: MPI_LAND
+parameter(MPI_LAND = 1476395013) 
+INTEGER, PRIVATE :: MPI_BAND
+parameter(MPI_BAND = 1476395014) 
+INTEGER, PRIVATE :: MPI_LOR
+parameter(MPI_LOR = 1476395015) 
+INTEGER, PRIVATE :: MPI_BOR
+parameter(MPI_BOR = 1476395016) 
+INTEGER, PRIVATE :: MPI_LXOR
+parameter(MPI_LXOR = 1476395017) 
+INTEGER, PRIVATE :: MPI_BXOR
+parameter(MPI_BXOR = 1476395018) 
+INTEGER, PRIVATE :: MPI_MINLOC
+parameter(MPI_MINLOC = 1476395019) 
+INTEGER, PRIVATE :: MPI_MAXLOC
+parameter(MPI_MAXLOC = 1476395020) 
+INTEGER, PRIVATE :: MPI_REPLACE
+parameter(MPI_REPLACE = 1476395021) 
+INTEGER, PRIVATE :: MPI_NO_OP
+parameter(MPI_NO_OP = 1476395022) 
+INTEGER, PRIVATE :: MPI_COMM_WORLD
+parameter(MPI_COMM_WORLD = 1140850688) 
+INTEGER, PRIVATE :: MPI_COMM_SELF
+parameter(MPI_COMM_SELF = 1140850689) 
+INTEGER, PRIVATE :: MPI_GROUP_EMPTY
+parameter(MPI_GROUP_EMPTY = 1207959552) 
+INTEGER, PRIVATE :: MPI_COMM_NULL
+parameter(MPI_COMM_NULL = 67108864) 
+INTEGER, PRIVATE :: MPI_WIN_NULL
+parameter(MPI_WIN_NULL = 536870912) 
+INTEGER, PRIVATE :: MPI_FILE_NULL
+parameter(MPI_FILE_NULL = 0) 
+INTEGER, PRIVATE :: MPI_GROUP_NULL
+parameter(MPI_GROUP_NULL = 134217728) 
+INTEGER, PRIVATE :: MPI_OP_NULL
+parameter(MPI_OP_NULL = 402653184) 
+INTEGER, PRIVATE :: MPI_DATATYPE_NULL
+parameter(MPI_DATATYPE_NULL = 201326592) 
+INTEGER, PRIVATE :: MPI_REQUEST_NULL
+parameter(MPI_REQUEST_NULL = 738197504) 
+INTEGER, PRIVATE :: MPI_ERRHANDLER_NULL
+parameter(MPI_ERRHANDLER_NULL = 335544320) 
+INTEGER, PRIVATE :: MPI_INFO_NULL
+parameter(MPI_INFO_NULL = 469762048) 
+INTEGER, PRIVATE :: MPI_INFO_ENV
+parameter(MPI_INFO_ENV = 1543503873) 
+INTEGER, PRIVATE :: MPI_TAG_UB
+parameter(MPI_TAG_UB = 1681915906) 
+INTEGER, PRIVATE :: MPI_HOST
+parameter(MPI_HOST = 1681915908) 
+INTEGER, PRIVATE :: MPI_IO
+parameter(MPI_IO = 1681915910) 
+INTEGER, PRIVATE :: MPI_WTIME_IS_GLOBAL
+parameter(MPI_WTIME_IS_GLOBAL = 1681915912) 
+INTEGER, PRIVATE :: MPI_UNIVERSE_SIZE
+parameter(MPI_UNIVERSE_SIZE = 1681915914) 
+INTEGER, PRIVATE :: MPI_LASTUSEDCODE
+parameter(MPI_LASTUSEDCODE = 1681915916) 
+INTEGER, PRIVATE :: MPI_APPNUM
+parameter(MPI_APPNUM = 1681915918) 
+INTEGER, PRIVATE :: MPI_WIN_BASE
+parameter(MPI_WIN_BASE = 1711276034) 
+INTEGER, PRIVATE :: MPI_WIN_SIZE
+parameter(MPI_WIN_SIZE = 1711276036) 
+INTEGER, PRIVATE :: MPI_WIN_DISP_UNIT
+parameter(MPI_WIN_DISP_UNIT = 1711276038) 
+INTEGER, PRIVATE :: MPI_WIN_CREATE_FLAVOR
+parameter(MPI_WIN_CREATE_FLAVOR = 1711276040) 
+INTEGER, PRIVATE :: MPI_WIN_MODEL
+parameter(MPI_WIN_MODEL = 1711276042) 
+INTEGER, PRIVATE :: MPI_MAX_ERROR_STRING
+parameter(MPI_MAX_ERROR_STRING = 512 - 1) 
+INTEGER, PRIVATE :: MPI_MAX_PORT_NAME
+parameter(MPI_MAX_PORT_NAME = 255) 
+INTEGER, PRIVATE :: MPI_MAX_OBJECT_NAME
+parameter(MPI_MAX_OBJECT_NAME = 127) 
+INTEGER, PRIVATE :: MPI_MAX_INFO_KEY
+parameter(MPI_MAX_INFO_KEY = 254) 
+INTEGER, PRIVATE :: MPI_MAX_INFO_VAL
+parameter(MPI_MAX_INFO_VAL = 1023) 
+INTEGER, PRIVATE :: MPI_MAX_PROCESSOR_NAME
+parameter(MPI_MAX_PROCESSOR_NAME = 128 - 1) 
+INTEGER, PRIVATE :: MPI_MAX_DATAREP_STRING
+parameter(MPI_MAX_DATAREP_STRING = 127) 
+INTEGER, PRIVATE :: MPI_MAX_LIBRARY_VERSION_STRING
+parameter(MPI_MAX_LIBRARY_VERSION_STRING = 8192 - 1) 
+INTEGER, PRIVATE :: MPI_UNDEFINED
+parameter(MPI_UNDEFINED = - 32766) 
+INTEGER, PRIVATE :: MPI_KEYVAL_INVALID
+parameter(MPI_KEYVAL_INVALID = 603979776) 
+INTEGER, PRIVATE :: MPI_BSEND_OVERHEAD
+parameter(MPI_BSEND_OVERHEAD = 96) 
+INTEGER, PRIVATE :: MPI_PROC_NULL
+parameter(MPI_PROC_NULL = - 1) 
+INTEGER, PRIVATE :: MPI_ANY_SOURCE
+parameter(MPI_ANY_SOURCE = - 2) 
+INTEGER, PRIVATE :: MPI_ANY_TAG
+parameter(MPI_ANY_TAG = - 1) 
+INTEGER, PRIVATE :: MPI_ROOT
+parameter(MPI_ROOT = - 3) 
+INTEGER, PRIVATE :: MPI_GRAPH
+parameter(MPI_GRAPH = 1) 
+INTEGER, PRIVATE :: MPI_CART
+parameter(MPI_CART = 2) 
+INTEGER, PRIVATE :: MPI_DIST_GRAPH
+parameter(MPI_DIST_GRAPH = 3) 
+INTEGER, PRIVATE :: MPI_VERSION
+parameter(MPI_VERSION = 3) 
+INTEGER, PRIVATE :: MPI_SUBVERSION
+parameter(MPI_SUBVERSION = 0) 
+INTEGER, PRIVATE :: MPI_LOCK_EXCLUSIVE
+parameter(MPI_LOCK_EXCLUSIVE = 234) 
+INTEGER, PRIVATE :: MPI_LOCK_SHARED
+parameter(MPI_LOCK_SHARED = 235) 
+INTEGER, PRIVATE :: MPI_COMPLEX
+parameter(MPI_COMPLEX = 1275070494) 
+INTEGER, PRIVATE :: MPI_DOUBLE_COMPLEX
+parameter(MPI_DOUBLE_COMPLEX = 1275072546) 
+INTEGER, PRIVATE :: MPI_LOGICAL
+parameter(MPI_LOGICAL = 1275069469) 
+INTEGER, PRIVATE :: MPI_REAL
+parameter(MPI_REAL = 1275069468) 
+INTEGER, PRIVATE :: MPI_DOUBLE_PRECISION
+parameter(MPI_DOUBLE_PRECISION = 1275070495) 
+INTEGER, PRIVATE :: MPI_INTEGER
+parameter(MPI_INTEGER = 1275069467) 
+INTEGER, PRIVATE :: MPI_2INTEGER
+parameter(MPI_2INTEGER = 1275070496) 
+INTEGER, PRIVATE :: MPI_2DOUBLE_PRECISION
+parameter(MPI_2DOUBLE_PRECISION = 1275072547) 
+INTEGER, PRIVATE :: MPI_2REAL
+parameter(MPI_2REAL = 1275070497) 
+INTEGER, PRIVATE :: MPI_CHARACTER
+parameter(MPI_CHARACTER = 1275068698) 
+INTEGER, PRIVATE :: MPI_BYTE
+parameter(MPI_BYTE = 1275068685) 
+INTEGER, PRIVATE :: MPI_UB
+parameter(MPI_UB = 1275068433) 
+INTEGER, PRIVATE :: MPI_LB
+parameter(MPI_LB = 1275068432) 
+INTEGER, PRIVATE :: MPI_PACKED
+parameter(MPI_PACKED = 1275068687) 
+INTEGER, PRIVATE :: MPI_INTEGER1
+parameter(MPI_INTEGER1 = 1275068717) 
+INTEGER, PRIVATE :: MPI_INTEGER2
+parameter(MPI_INTEGER2 = 1275068975) 
+INTEGER, PRIVATE :: MPI_INTEGER4
+parameter(MPI_INTEGER4 = 1275069488) 
+INTEGER, PRIVATE :: MPI_INTEGER8
+parameter(MPI_INTEGER8 = 1275070513) 
+INTEGER, PRIVATE :: MPI_INTEGER16
+parameter(MPI_INTEGER16 = MPI_DATATYPE_NULL) 
+INTEGER, PRIVATE :: MPI_REAL4
+parameter(MPI_REAL4 = 1275069479) 
+INTEGER, PRIVATE :: MPI_REAL8
+parameter(MPI_REAL8 = 1275070505) 
+INTEGER, PRIVATE :: MPI_REAL16
+parameter(MPI_REAL16 = MPI_DATATYPE_NULL) 
+INTEGER, PRIVATE :: MPI_COMPLEX8
+parameter(MPI_COMPLEX8 = 1275070504) 
+INTEGER, PRIVATE :: MPI_COMPLEX16
+parameter(MPI_COMPLEX16 = 1275072554) 
+INTEGER, PRIVATE :: MPI_COMPLEX32
+parameter(MPI_COMPLEX32 = MPI_DATATYPE_NULL) 
+INTEGER, PRIVATE :: MPI_ADDRESS_KIND
+parameter(MPI_ADDRESS_KIND = 8) 
+INTEGER, PRIVATE :: MPI_OFFSET_KIND
+parameter(MPI_OFFSET_KIND = 8) 
+INTEGER, PRIVATE :: MPI_COUNT_KIND
+parameter(MPI_COUNT_KIND = 8) 
+INTEGER, PRIVATE :: MPI_INTEGER_KIND
+parameter(MPI_INTEGER_KIND = 4) 
+INTEGER, PRIVATE :: MPI_CHAR
+parameter(MPI_CHAR = 1275068673) 
+INTEGER, PRIVATE :: MPI_SIGNED_CHAR
+parameter(MPI_SIGNED_CHAR = 1275068696) 
+INTEGER, PRIVATE :: MPI_UNSIGNED_CHAR
+parameter(MPI_UNSIGNED_CHAR = 1275068674) 
+INTEGER, PRIVATE :: MPI_WCHAR
+parameter(MPI_WCHAR = 1275069454) 
+INTEGER, PRIVATE :: MPI_SHORT
+parameter(MPI_SHORT = 1275068931) 
+INTEGER, PRIVATE :: MPI_UNSIGNED_SHORT
+parameter(MPI_UNSIGNED_SHORT = 1275068932) 
+INTEGER, PRIVATE :: MPI_INT
+parameter(MPI_INT = 1275069445) 
+INTEGER, PRIVATE :: MPI_UNSIGNED
+parameter(MPI_UNSIGNED = 1275069446) 
+INTEGER, PRIVATE :: MPI_LONG
+parameter(MPI_LONG = 1275070471) 
+INTEGER, PRIVATE :: MPI_UNSIGNED_LONG
+parameter(MPI_UNSIGNED_LONG = 1275070472) 
+INTEGER, PRIVATE :: MPI_FLOAT
+parameter(MPI_FLOAT = 1275069450) 
+INTEGER, PRIVATE :: MPI_DOUBLE
+parameter(MPI_DOUBLE = 1275070475) 
+INTEGER, PRIVATE :: MPI_LONG_DOUBLE
+parameter(MPI_LONG_DOUBLE = 1275070476) 
+INTEGER, PRIVATE :: MPI_LONG_LONG_INT
+parameter(MPI_LONG_LONG_INT = 1275070473) 
+INTEGER, PRIVATE :: MPI_UNSIGNED_LONG_LONG
+parameter(MPI_UNSIGNED_LONG_LONG = 1275070489) 
+INTEGER, PRIVATE :: MPI_LONG_LONG
+parameter(MPI_LONG_LONG = 1275070473) 
+INTEGER, PRIVATE :: MPI_FLOAT_INT
+parameter(MPI_FLOAT_INT = - 1946157056) 
+INTEGER, PRIVATE :: MPI_DOUBLE_INT
+parameter(MPI_DOUBLE_INT = - 1946157055) 
+INTEGER, PRIVATE :: MPI_LONG_INT
+parameter(MPI_LONG_INT = - 1946157054) 
+INTEGER, PRIVATE :: MPI_SHORT_INT
+parameter(MPI_SHORT_INT = - 1946157053) 
+INTEGER, PRIVATE :: MPI_2INT
+parameter(MPI_2INT = 1275070486) 
+INTEGER, PRIVATE :: MPI_LONG_DOUBLE_INT
+parameter(MPI_LONG_DOUBLE_INT = - 1946157052) 
+INTEGER, PRIVATE :: MPI_INT8_T
+parameter(MPI_INT8_T = 1275068727) 
+INTEGER, PRIVATE :: MPI_INT16_T
+parameter(MPI_INT16_T = 1275068984) 
+INTEGER, PRIVATE :: MPI_INT32_T
+parameter(MPI_INT32_T = 1275069497) 
+INTEGER, PRIVATE :: MPI_INT64_T
+parameter(MPI_INT64_T = 1275070522) 
+INTEGER, PRIVATE :: MPI_UINT8_T
+parameter(MPI_UINT8_T = 1275068731) 
+INTEGER, PRIVATE :: MPI_UINT16_T
+parameter(MPI_UINT16_T = 1275068988) 
+INTEGER, PRIVATE :: MPI_UINT32_T
+parameter(MPI_UINT32_T = 1275069501) 
+INTEGER, PRIVATE :: MPI_UINT64_T
+parameter(MPI_UINT64_T = 1275070526) 
+INTEGER, PRIVATE :: MPI_C_BOOL
+parameter(MPI_C_BOOL = 1275068735) 
+INTEGER, PRIVATE :: MPI_C_FLOAT_COMPLEX
+parameter(MPI_C_FLOAT_COMPLEX = 1275070528) 
+INTEGER, PRIVATE :: MPI_C_COMPLEX
+parameter(MPI_C_COMPLEX = 1275070528) 
+INTEGER, PRIVATE :: MPI_C_DOUBLE_COMPLEX
+parameter(MPI_C_DOUBLE_COMPLEX = 1275072577) 
+INTEGER, PRIVATE :: MPI_C_LONG_DOUBLE_COMPLEX
+parameter(MPI_C_LONG_DOUBLE_COMPLEX = 1275072578) 
+INTEGER, PRIVATE :: MPI_AINT
+parameter(MPI_AINT = 1275070531) 
+INTEGER, PRIVATE :: MPI_OFFSET
+parameter(MPI_OFFSET = 1275070532) 
+INTEGER, PRIVATE :: MPI_COUNT
+parameter(MPI_COUNT = 1275070533) 
+INTEGER, PRIVATE :: MPI_CXX_BOOL
+parameter(MPI_CXX_BOOL = 1275068723) 
+INTEGER, PRIVATE :: MPI_CXX_FLOAT_COMPLEX
+parameter(MPI_CXX_FLOAT_COMPLEX = 1275070516) 
+INTEGER, PRIVATE :: MPI_CXX_DOUBLE_COMPLEX
+parameter(MPI_CXX_DOUBLE_COMPLEX = 1275072565) 
+INTEGER, PRIVATE :: MPI_CXX_LONG_DOUBLE_COMPLEX
+parameter(MPI_CXX_LONG_DOUBLE_COMPLEX = 1275072566) 
+INTEGER, PRIVATE :: MPI_COMBINER_NAMED
+parameter(MPI_COMBINER_NAMED = 1) 
+INTEGER, PRIVATE :: MPI_COMBINER_DUP
+parameter(MPI_COMBINER_DUP = 2) 
+INTEGER, PRIVATE :: MPI_COMBINER_CONTIGUOUS
+parameter(MPI_COMBINER_CONTIGUOUS = 3) 
+INTEGER, PRIVATE :: MPI_COMBINER_VECTOR
+parameter(MPI_COMBINER_VECTOR = 4) 
+INTEGER, PRIVATE :: MPI_COMBINER_HVECTOR_INTEGER
+parameter(MPI_COMBINER_HVECTOR_INTEGER = 5) 
+INTEGER, PRIVATE :: MPI_COMBINER_HVECTOR
+parameter(MPI_COMBINER_HVECTOR = 6) 
+INTEGER, PRIVATE :: MPI_COMBINER_INDEXED
+parameter(MPI_COMBINER_INDEXED = 7) 
+INTEGER, PRIVATE :: MPI_COMBINER_HINDEXED_INTEGER
+parameter(MPI_COMBINER_HINDEXED_INTEGER = 8) 
+INTEGER, PRIVATE :: MPI_COMBINER_HINDEXED
+parameter(MPI_COMBINER_HINDEXED = 9) 
+INTEGER, PRIVATE :: MPI_COMBINER_INDEXED_BLOCK
+parameter(MPI_COMBINER_INDEXED_BLOCK = 10) 
+INTEGER, PRIVATE :: MPI_COMBINER_STRUCT_INTEGER
+parameter(MPI_COMBINER_STRUCT_INTEGER = 11) 
+INTEGER, PRIVATE :: MPI_COMBINER_STRUCT
+parameter(MPI_COMBINER_STRUCT = 12) 
+INTEGER, PRIVATE :: MPI_COMBINER_SUBARRAY
+parameter(MPI_COMBINER_SUBARRAY = 13) 
+INTEGER, PRIVATE :: MPI_COMBINER_DARRAY
+parameter(MPI_COMBINER_DARRAY = 14) 
+INTEGER, PRIVATE :: MPI_COMBINER_F90_REAL
+parameter(MPI_COMBINER_F90_REAL = 15) 
+INTEGER, PRIVATE :: MPI_COMBINER_F90_COMPLEX
+parameter(MPI_COMBINER_F90_COMPLEX = 16) 
+INTEGER, PRIVATE :: MPI_COMBINER_F90_INTEGER
+parameter(MPI_COMBINER_F90_INTEGER = 17) 
+INTEGER, PRIVATE :: MPI_COMBINER_RESIZED
+parameter(MPI_COMBINER_RESIZED = 18) 
+INTEGER, PRIVATE :: MPI_COMBINER_HINDEXED_BLOCK
+parameter(MPI_COMBINER_HINDEXED_BLOCK = 19) 
+INTEGER, PRIVATE :: MPI_TYPECLASS_REAL
+parameter(MPI_TYPECLASS_REAL = 1) 
+INTEGER, PRIVATE :: MPI_TYPECLASS_INTEGER
+parameter(MPI_TYPECLASS_INTEGER = 2) 
+INTEGER, PRIVATE :: MPI_TYPECLASS_COMPLEX
+parameter(MPI_TYPECLASS_COMPLEX = 3) 
+INTEGER, PRIVATE :: MPI_MODE_NOCHECK
+parameter(MPI_MODE_NOCHECK = 1024) 
+INTEGER, PRIVATE :: MPI_MODE_NOSTORE
+parameter(MPI_MODE_NOSTORE = 2048) 
+INTEGER, PRIVATE :: MPI_MODE_NOPUT
+parameter(MPI_MODE_NOPUT = 4096) 
+INTEGER, PRIVATE :: MPI_MODE_NOPRECEDE
+parameter(MPI_MODE_NOPRECEDE = 8192) 
+INTEGER, PRIVATE :: MPI_MODE_NOSUCCEED
+parameter(MPI_MODE_NOSUCCEED = 16384) 
+INTEGER, PRIVATE :: MPI_COMM_TYPE_SHARED
+parameter(MPI_COMM_TYPE_SHARED = 1) 
+INTEGER, PRIVATE :: MPI_MESSAGE_NULL
+parameter(MPI_MESSAGE_NULL = MPI_REQUEST_NULL) 
+INTEGER, PRIVATE :: MPI_MESSAGE_NO_PROC
+parameter(MPI_MESSAGE_NO_PROC = 1811939328) 
+INTEGER, PRIVATE :: MPI_THREAD_SINGLE
+parameter(MPI_THREAD_SINGLE = 0) 
+INTEGER, PRIVATE :: MPI_THREAD_FUNNELED
+parameter(MPI_THREAD_FUNNELED = 1) 
+INTEGER, PRIVATE :: MPI_THREAD_SERIALIZED
+parameter(MPI_THREAD_SERIALIZED = 2) 
+INTEGER, PRIVATE :: MPI_THREAD_MULTIPLE
+parameter(MPI_THREAD_MULTIPLE = 3) 
+INTEGER, PRIVATE :: MPI_MODE_RDONLY
+parameter(MPI_MODE_RDONLY = 2) 
+INTEGER, PRIVATE :: MPI_MODE_RDWR
+parameter(MPI_MODE_RDWR = 8) 
+INTEGER, PRIVATE :: MPI_MODE_WRONLY
+parameter(MPI_MODE_WRONLY = 4) 
+INTEGER, PRIVATE :: MPI_MODE_DELETE_ON_CLOSE
+parameter(MPI_MODE_DELETE_ON_CLOSE = 16) 
+INTEGER, PRIVATE :: MPI_MODE_UNIQUE_OPEN
+parameter(MPI_MODE_UNIQUE_OPEN = 32) 
+INTEGER, PRIVATE :: MPI_MODE_CREATE
+parameter(MPI_MODE_CREATE = 1) 
+INTEGER, PRIVATE :: MPI_MODE_EXCL
+parameter(MPI_MODE_EXCL = 64) 
+INTEGER, PRIVATE :: MPI_MODE_APPEND
+parameter(MPI_MODE_APPEND = 128) 
+INTEGER, PRIVATE :: MPI_MODE_SEQUENTIAL
+parameter(MPI_MODE_SEQUENTIAL = 256) 
+INTEGER, PRIVATE :: MPI_SEEK_SET
+parameter(MPI_SEEK_SET = 600) 
+INTEGER, PRIVATE :: MPI_SEEK_CUR
+parameter(MPI_SEEK_CUR = 602) 
+INTEGER, PRIVATE :: MPI_SEEK_END
+parameter(MPI_SEEK_END = 604) 
+INTEGER, PRIVATE :: MPI_ORDER_C
+parameter(MPI_ORDER_C = 56) 
+INTEGER, PRIVATE :: MPI_ORDER_FORTRAN
+parameter(MPI_ORDER_FORTRAN = 57) 
+INTEGER, PRIVATE :: MPI_DISTRIBUTE_BLOCK
+parameter(MPI_DISTRIBUTE_BLOCK = 121) 
+INTEGER, PRIVATE :: MPI_DISTRIBUTE_CYCLIC
+parameter(MPI_DISTRIBUTE_CYCLIC = 122) 
+INTEGER, PRIVATE :: MPI_DISTRIBUTE_NONE
+parameter(MPI_DISTRIBUTE_NONE = 123) 
+INTEGER, PRIVATE :: MPI_DISTRIBUTE_DFLT_DARG
+parameter(MPI_DISTRIBUTE_DFLT_DARG = - 49767) 
+INTEGER(kind=8), PRIVATE :: MPI_DISPLACEMENT_CURRENT
+parameter(MPI_DISPLACEMENT_CURRENT = - 54278278) 
+LOGICAL, PRIVATE :: MPI_SUBARRAYS_SUPPORTED
+parameter(MPI_SUBARRAYS_SUPPORTED = .FALSE.) 
+LOGICAL, PRIVATE :: MPI_ASYNC_PROTECTS_NONBLOCKING
+parameter(MPI_ASYNC_PROTECTS_NONBLOCKING = .FALSE.) 
+INTEGER, PRIVATE :: MPI_BOTTOM, MPI_IN_PLACE, MPI_UNWEIGHTED
+INTEGER, PRIVATE :: MPI_WEIGHTS_EMPTY
+external :: MPI_DUP_FN, MPI_NULL_DELETE_FN, MPI_NULL_COPY_FN
+external :: MPI_WTIME, MPI_WTICK
+external :: PMPI_WTIME, PMPI_WTICK
+external :: MPI_COMM_DUP_FN, MPI_COMM_NULL_DELETE_FN
+external :: MPI_COMM_NULL_COPY_FN
+external :: MPI_WIN_DUP_FN, MPI_WIN_NULL_DELETE_FN
+external :: MPI_WIN_NULL_COPY_FN
+external :: MPI_TYPE_DUP_FN, MPI_TYPE_NULL_DELETE_FN
+external :: MPI_TYPE_NULL_COPY_FN
+external :: MPI_CONVERSION_FN_NULL
+REAL(kind=8), PRIVATE :: MPI_WTIME, MPI_WTICK
+REAL(kind=8), PRIVATE :: PMPI_WTIME, PMPI_WTICK
+COMMON / MPIFCMB5 / MPI_UNWEIGHTED
+COMMON / MPIFCMB9 / MPI_WEIGHTS_EMPTY
+save /MPIFCMB5/
+save /MPIFCMB9/
+COMMON / MPIPRIV1 / MPI_BOTTOM,MPI_IN_PLACE,MPI_STATUS_IGNORE
+COMMON / MPIPRIV2 / MPI_STATUSES_IGNORE,MPI_ERRCODES_IGNORE
+save /MPIPRIV2/,/MPIPRIV1/
+COMMON / MPIPRIVC / MPI_ARGVS_NULL,MPI_ARGV_NULL
+save /MPIPRIVC/
+!-------------------------------------------------------------------------------
+INTEGER, PUBLIC :: myid, npe, mpi_comm_ympi
+INTEGER, PUBLIC :: loc2(2), loc3(3), loc4(4), is, ie, js, je
+INTEGER, ALLOCATABLE, PRIVATE :: qrs(:), qrr(:), qls(:), qlr(:), tgl(:), tgr(:)
+INTEGER, ALLOCATABLE, PRIVATE :: statr(:,:), statl(:,:)
+INTEGER, PUBLIC :: im, jm, flagxcycle, halosize, ixoverlay
+REAL(kind=4), ALLOCATABLE, PUBLIC :: lon(:), lat(:), mask(:,:)
+!-------------------------------------------------------------------------------
+TYPE , PUBLIC :: pebox_type
+INTEGER :: myid, i1, i2, j1, j2
+INTEGER :: up, dn, nr, nl, np
+INTEGER :: ei1, ei2, ej1, ej2
+INTEGER :: halo, isize, jsize
+INTEGER, POINTER, DIMENSION(:,:) :: left
+INTEGER, POINTER, DIMENSION(:,:) :: right
+END TYPE pebox_type
+TYPE ( pebox_type ) , PUBLIC :: mypebox
+!-------------------------------------------------------------------------------
+INTERFACE updatev
+MODULE PROCEDURE update2d_sgl
+MODULE PROCEDURE update3d_sgl
+MODULE PROCEDURE update4d_sgl
+MODULE PROCEDURE update4d_sgle
+MODULE PROCEDURE update2d_dbl
+MODULE PROCEDURE update3d_dbl
+MODULE PROCEDURE update4d_dbl
+MODULE PROCEDURE update4d_dble
+END INTERFACE 
+INTERFACE get_mpimin
+MODULE PROCEDURE get_mpimini
+MODULE PROCEDURE get_mpiminr
+MODULE PROCEDURE get_mpimind
+END INTERFACE 
+INTERFACE bcast_to_all
+MODULE PROCEDURE bcast_to_alli
+MODULE PROCEDURE bcast_to_allr
+MODULE PROCEDURE bcast_to_alld
+END INTERFACE 
+!-------------------------------------------------------------------------------
+CONTAINS
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: runbyturn
+SUBROUTINE runbyturn(flag)
+INTEGER, INTENT(IN) :: flag
+INTEGER :: ierr, i = 0
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+END SUBROUTINE runbyturn
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: opennc
+SUBROUTINE opennc(ncid,filename,action)
+CHARACTER, INTENT(IN) :: filename*(*), action*(*)
+INTEGER, INTENT(IN) :: ncid
+INTEGER :: flag, ierr
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+END SUBROUTINE opennc
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: closenc
+SUBROUTINE closenc(ncid)
+INTEGER, INTENT(IN) :: ncid
+INTEGER :: flag = 0, ierr
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+END SUBROUTINE closenc
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: ympi_init
+SUBROUTINE ympi_init()
+INTEGER :: ierr
+CHARACTER(len=10) :: str
+END SUBROUTINE ympi_init
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: ympi_final
+SUBROUTINE ympi_final()
+INTEGER :: rc
+END SUBROUTINE ympi_final
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: get_mpimini
+SUBROUTINE get_mpimini(x)
+INTEGER, INTENT(INOUT) :: x
+INTEGER :: y
+INTEGER :: ierr
+END SUBROUTINE get_mpimini
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: get_mpiminr
+SUBROUTINE get_mpiminr(x)
+REAL(kind=4), INTENT(INOUT) :: x
+REAL(kind=4) :: y
+INTEGER :: ierr
+END SUBROUTINE get_mpiminr
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: get_mpimind
+SUBROUTINE get_mpimind(x)
+REAL(kind=8), INTENT(INOUT) :: x
+REAL(kind=8) :: y
+INTEGER :: ierr
+END SUBROUTINE get_mpimind
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: bcast_to_alli
+SUBROUTINE bcast_to_alli(ii)
+INTEGER, INTENT(INOUT) :: ii
+INTEGER :: ierr
+END SUBROUTINE bcast_to_alli
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: bcast_to_allr
+SUBROUTINE bcast_to_allr(ii)
+REAL(kind=4), INTENT(INOUT) :: ii
+INTEGER :: ierr
+END SUBROUTINE bcast_to_allr
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: bcast_to_alld
+SUBROUTINE bcast_to_alld(ii)
+REAL(kind=8), INTENT(INOUT) :: ii
+INTEGER :: ierr
+END SUBROUTINE bcast_to_alld
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: update2d_sgl
+SUBROUTINE update2d_sgl(ee,ixl,iyl,halo)
+INTEGER, INTENT(IN) :: ixl, iyl, halo
+REAL(kind=4), DIMENSION(ixl,iyl), INTENT(INOUT) :: ee
+INTEGER :: ncount, i, ierr
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+REAL(kind=4) :: dnee(ixl,halo), dnee1(ixl,halo), upee(ixl,halo), upee1(ixl,halo)
+REAL(kind=4) :: lfee(halo,iyl), lfee1(halo,iyl), rtee(halo,iyl), rtee1(halo,iyl)
+END SUBROUTINE update2d_sgl
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: update3d_sgl
+SUBROUTINE update3d_sgl(ee,ixl,iyl,kl,halo)
+INTEGER, INTENT(IN) :: ixl, iyl, kl, halo
+REAL(kind=4), DIMENSION(ixl,iyl,kl), INTENT(INOUT) :: ee
+INTEGER :: ncount, i, ierr, j, k
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+REAL(kind=4) :: dnee(kl,ixl,halo), dnee1(kl,ixl,halo), upee(kl,ixl,halo), upee1(kl,ixl,halo)
+REAL(kind=4) :: lfee(kl,halo,iyl), lfee1(kl,halo,iyl), rtee(kl,halo,iyl), rtee1(kl,halo,iyl)
+END SUBROUTINE update3d_sgl
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: update4d_sgle
+SUBROUTINE update4d_sgle(ee,ixl,iyl,kl,jl,halo)
+INTEGER, INTENT(IN) :: ixl, iyl, kl, jl, halo
+REAL(kind=4), DIMENSION(kl,jl,ixl,iyl), INTENT(INOUT) :: ee
+INTEGER :: ncount, i, ierr
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+REAL(kind=4) :: dnee(kl,jl,ixl,halo), dnee1(kl,jl,ixl,halo), upee(kl,jl,ixl,halo), upee1(kl,jl,ixl,halo)
+REAL(kind=4) :: lfee(kl,jl,halo,iyl), lfee1(kl,jl,halo,iyl), rtee(kl,jl,halo,iyl), rtee1(kl,jl,halo,iyl)
+END SUBROUTINE update4d_sgle
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: update4d_sgl
+SUBROUTINE update4d_sgl(ee,ixl,iyl,kl,jl,halo,flag)
+INTEGER, INTENT(IN) :: ixl, iyl, kl, jl, halo, flag
+REAL(kind=4), DIMENSION(ixl,iyl,kl,jl), INTENT(INOUT) :: ee
+INTEGER :: ncount, i, ierr, j, k
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+REAL(kind=4) :: dnee(kl,jl,ixl,halo), dnee1(kl,jl,ixl,halo), upee(kl,jl,ixl,halo), upee1(kl,jl,ixl,halo)
+REAL(kind=4) :: lfee(kl,jl,halo,iyl), lfee1(kl,jl,halo,iyl), rtee(kl,jl,halo,iyl), rtee1(kl,jl,halo,iyl)
+END SUBROUTINE update4d_sgl
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: update2d_dbl
+SUBROUTINE update2d_dbl(ee,ixl,iyl,halo)
+INTEGER, INTENT(IN) :: ixl, iyl, halo
+REAL(kind=8), DIMENSION(ixl,iyl), INTENT(INOUT) :: ee
+INTEGER :: ncount, i, ierr
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+REAL(kind=8) :: dnee(ixl,halo), dnee1(ixl,halo), upee(ixl,halo), upee1(ixl,halo)
+REAL(kind=8) :: lfee(halo,iyl), lfee1(halo,iyl), rtee(halo,iyl), rtee1(halo,iyl)
+END SUBROUTINE update2d_dbl
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: update3d_dbl
+SUBROUTINE update3d_dbl(ee,ixl,iyl,kl,halo)
+INTEGER, INTENT(IN) :: ixl, iyl, kl, halo
+REAL(kind=8), DIMENSION(ixl,iyl,kl), INTENT(INOUT) :: ee
+INTEGER :: ncount, i, ierr, j, k
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+REAL(kind=8) :: dnee(kl,ixl,halo), dnee1(kl,ixl,halo), upee(kl,ixl,halo), upee1(kl,ixl,halo)
+REAL(kind=8) :: lfee(kl,halo,iyl), lfee1(kl,halo,iyl), rtee(kl,halo,iyl), rtee1(kl,halo,iyl)
+END SUBROUTINE update3d_dbl
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: update4d_dble
+SUBROUTINE update4d_dble(ee,ixl,iyl,kl,jl,halo)
+INTEGER, INTENT(IN) :: ixl, iyl, kl, jl, halo
+REAL(kind=8), DIMENSION(kl,jl,ixl,iyl), INTENT(INOUT) :: ee
+INTEGER :: ncount, i, ierr
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+REAL(kind=8) :: dnee(kl,jl,ixl,halo), dnee1(kl,jl,ixl,halo), upee(kl,jl,ixl,halo), upee1(kl,jl,ixl,halo)
+REAL(kind=8) :: lfee(kl,jl,halo,iyl), lfee1(kl,jl,halo,iyl), rtee(kl,jl,halo,iyl), rtee1(kl,jl,halo,iyl)
+END SUBROUTINE update4d_dble
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: update4d_dbl
+SUBROUTINE update4d_dbl(ee,ixl,iyl,kl,jl,halo,flag)
+INTEGER, INTENT(IN) :: ixl, iyl, kl, jl, halo, flag
+REAL(kind=8), DIMENSION(ixl,iyl,kl,jl), INTENT(INOUT) :: ee
+INTEGER :: ncount, i, ierr, j, k
+INTEGER, DIMENSION(MPI_STATUS_SIZE) :: stat
+REAL(kind=8) :: dnee(kl,jl,ixl,halo), dnee1(kl,jl,ixl,halo), upee(kl,jl,ixl,halo), upee1(kl,jl,ixl,halo)
+REAL(kind=8) :: lfee(kl,jl,halo,iyl), lfee1(kl,jl,halo,iyl), rtee(kl,jl,halo,iyl), rtee1(kl,jl,halo,iyl)
+END SUBROUTINE update4d_dbl
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: set_pebox !input parameters is needed before this sub.
+SUBROUTINE init_pebox(filename,xname,yname,mname,n,myid)
+INTEGER, INTENT(IN) :: n, myid
+CHARACTER, INTENT(IN) :: filename*(*), xname*(*), yname*(*), mname*(*)
+INTEGER :: ncid, i, ierr, im1
+INTEGER, ALLOCATABLE :: pebox(:,:), peleft(:,:,:), peright(:,:,:)
+END SUBROUTINE init_pebox
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: set_pebox
+SUBROUTINE set_pebox(im,jm,n,flagxcycle,halosize,lon,lat,mask,pebox,peleft,peright)
+INTEGER, INTENT(IN) :: im, jm, n, flagxcycle, halosize
+REAL(kind=4), INTENT(IN) :: lon(im), lat(jm), mask(im,jm)
+INTEGER, INTENT(OUT) :: pebox(17,n), peleft(n,n,5), peright(n,n,5)
+REAL(kind=4) :: avenpx, avenpy, a, aa, avepoint
+INTEGER, ALLOCATABLE :: npx(:), npxstart(:), npxend(:)
+INTEGER :: i1, i2, i, n1, n2, ii, j1, j2, j, jj, nn
+INTEGER :: nr, nl, nx, ny, nxmore, ny1
+END SUBROUTINE set_pebox
+
+!-------------------------------------------------------------------------------
+END MODULE ympi_mod
+

@@ -1,0 +1,213 @@
+
+! =================================================================================== 
+! <<Automatically generated for Rose Fortran Separate Compilation, DO NOT MODIFY IT>> 
+! =================================================================================== 
+
+MODULE wamfio_mod
+!-------------------------------------------------------------------------------
+USE time_mod
+USE netcdf_mod
+USE wamvar_mod
+USE wamcpl_mod
+IMPLICIT NONE
+!-------------------------------------------------------------------------------
+public wamfio_mod_init
+public output,outrst,inprst,get_wind
+private settopog,outmix,outwav_t
+private 
+!-------------------------------------------------------------------------------
+REAL, ALLOCATABLE, PRIVATE :: windx1(:,:), windx2(:,:), windy1(:,:), windy2(:,:)
+INTEGER, PRIVATE :: wflag = 0
+INTEGER, PRIVATE :: mod_init = 0
+INTEGER, PRIVATE :: recd = 0
+INTEGER, PRIVATE :: wflag_qbln = 0, wflag_ncep = 0
+DOUBLE PRECISION, PRIVATE :: dwtime1 = - 1.d0, dwtime2 = - 1.d0
+REAL, ALLOCATABLE, PRIVATE :: v2(:,:), v3(:,:,:)
+INTEGER, DIMENSION(:,:), ALLOCATABLE, PRIVATE :: iv2
+REAL, DIMENSION(:,:,:), ALLOCATABLE, PRIVATE :: wcoe
+INTEGER, ALLOCATABLE, PRIVATE :: widxx(:,:), widxy(:,:)
+REAL, ALLOCATABLE, PRIVATE :: wu(:,:), wv(:,:)
+REAL, ALLOCATABLE, PRIVATE :: lon(:), lat(:)
+INTEGER(kind=2), DIMENSION(:,:), ALLOCATABLE, PRIVATE :: ivar
+!-------------------------------------------------------------------------------
+CONTAINS
+SUBROUTINE wamfio_mod_init(lon,lat,mask,dep,top)
+REAL, INTENT(IN), OPTIONAL :: lon(:), lat(:), mask(:,:), dep(:), top(:,:)
+INTEGER :: ncid
+END SUBROUTINE wamfio_mod_init
+
+SUBROUTINE settopog()
+USE netcdf_mod
+INTEGER :: i, j, ncid
+END SUBROUTINE settopog
+
+SUBROUTINE setwave()
+INTEGER :: j, k
+REAL :: wh, di, wkk, dk, tanhdk, wfk, wsk, deltts
+REAL :: cgro, yy
+END SUBROUTINE setwave
+
+SUBROUTINE nlweight()
+INTEGER :: mr, j, js, j1, j2, is1, icl1, icl2, k, ikn
+REAL :: alamd, con, deltha, delphi, delphi2, cl1, cl2, ch, acl1, acl2
+REAL :: cl11, cl21, wkk
+REAL :: wklp, wklm, wkp, wkp1, wklap, wklap1, wklam, wklam1, wkm, wkm1
+END SUBROUTINE nlweight
+
+INTEGER FUNCTION jafu(cl,j,ian)
+REAL, INTENT(IN) :: cl
+INTEGER, INTENT(IN) :: j, ian
+INTEGER :: idph, ja
+END  FUNCTION jafu
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!###############################################################################
+SUBROUTINE get_wind()
+INTEGER :: ii, i, j
+REAL :: a, b
+END SUBROUTINE get_wind
+
+SUBROUTINE read_wind(dwtime,windx,windy,flag)
+DOUBLE PRECISION, INTENT(IN) :: dwtime
+REAL, INTENT(OUT) :: windx(:,:), windy(:,:)
+INTEGER, INTENT(OUT) :: flag
+INTEGER :: ncid, rec, iwtime(6), maxrec
+CHARACTER(len=14) :: cwtime
+CHARACTER(len=100) :: filename
+LOGICAL :: ext
+END SUBROUTINE read_wind
+
+SUBROUTINE read_wind_gfs(dwtime,windx,windy,flag)
+DOUBLE PRECISION, INTENT(IN) :: dwtime
+REAL, INTENT(OUT) :: windx(:,:), windy(:,:)
+INTEGER, INTENT(OUT) :: flag
+INTEGER :: ncid, rec, iwtime(6), maxrec
+CHARACTER(len=14) :: cwtime
+CHARACTER(len=100) :: filename
+LOGICAL :: ext
+INTEGER, DIMENSION(6) :: witime
+CHARACTER(len=10) :: wctime
+END SUBROUTINE read_wind_gfs
+
+SUBROUTINE read_wind_qbln_interp(dwtime,windx,windy,flag)
+DOUBLE PRECISION, INTENT(IN) :: dwtime
+REAL, INTENT(OUT) :: windx(:,:), windy(:,:)
+INTEGER, INTENT(OUT) :: flag
+INTEGER :: ncid, rec, iwtime(6), maxrec
+CHARACTER(len=14) :: cwtime
+CHARACTER(len=100) :: filename
+LOGICAL :: ext
+INTEGER, PARAMETER :: im = 720, jm = 353
+REAL, PARAMETER :: wdx = 0.5, wdy = 0.5, lon0 = 0.5, lat0 = - 88.
+INTEGER :: i, j, i1, i2
+REAL :: x1, x2, x3, x4, y1, y2, y3, y4, w1, w2, w3, w4, xx, yy
+END SUBROUTINE read_wind_qbln_interp
+
+SUBROUTINE read_wind_ncep_interp(dwtime,windx,windy,flag)
+DOUBLE PRECISION, INTENT(IN) :: dwtime
+REAL, INTENT(OUT) :: windx(:,:), windy(:,:)
+INTEGER, INTENT(OUT) :: flag
+INTEGER :: ncid, rec, iwtime(6), maxrec
+CHARACTER(len=14) :: cwtime
+CHARACTER :: filename*(100), filename1*(100)
+LOGICAL :: ext
+INTEGER :: im, jm
+REAL :: wdx, wdy, lon0, lat0
+INTEGER :: i, j, i1, i2
+REAL :: x1, x2, x3, x4, y1, y2, y3, y4, w1, w2, w3, w4, xx, yy
+END SUBROUTINE read_wind_ncep_interp
+
+SUBROUTINE bilinear_4points(x,y,x1,x2,x3,x4,y1,y2,y3,y4,w1,w2,w3,w4,f1,f2,f3,f4,f)
+REAL, INTENT(IN) :: x1, x2, x3, x4, y1, y2, y3, y4, x, y
+REAL, INTENT(OUT) :: w1, w2, w3, w4
+REAL, INTENT(IN), OPTIONAL :: f1, f2, f3, f4
+REAL, INTENT(OUT), OPTIONAL :: f
+REAL :: a1, a2, a3, a4, b1, b2, b3, b4, A, B, C, t, s
+END SUBROUTINE bilinear_4points
+
+SUBROUTINE outrst(filename)
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER :: ncid
+END SUBROUTINE outrst
+
+SUBROUTINE inprst(filename,key)
+INTEGER, INTENT(OUT) :: key
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER :: ncid
+LOGICAL :: ext
+END SUBROUTINE inprst
+
+SUBROUTINE output()
+INTEGER :: ncid
+CHARACTER :: filename*(80), file1*(80), file2*(80), file3*(80), file4*(80), fileeng*(80)
+CHARACTER :: timstr*(80), gamastr*(80)
+LOGICAL :: chkflag
+REAL :: gama_wt
+END SUBROUTINE output
+
+SUBROUTINE outwav_t(filename,rec)
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER, INTENT(IN) :: rec
+INTEGER :: ncid, jd
+INTEGER(kind=2), PARAMETER :: ivland = nf_fill_int2
+LOGICAL :: ext
+INTEGER :: outrecord, timerec, ittt
+DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: timealready
+END SUBROUTINE outwav_t
+
+SUBROUTINE setland_iv2(var,scal)
+REAL, INTENT(IN) :: var(:,:), scal
+INTEGER :: i, j
+END SUBROUTINE setland_iv2
+
+SUBROUTINE setland_v2(var)
+REAL, DIMENSION(:,:), INTENT(IN) :: var
+INTEGER :: i, j
+END SUBROUTINE setland_v2
+
+SUBROUTINE setland_v3(var)
+REAL, DIMENSION(:,:,:), INTENT(IN) :: var
+INTEGER :: i, j
+END SUBROUTINE setland_v3
+
+SUBROUTINE outeng_t(filename,rec)
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER, INTENT(IN) :: rec
+INTEGER :: ncid, jd
+INTEGER(kind=2), PARAMETER :: ivland = nf_fill_int2
+LOGICAL :: ext
+INTEGER :: outrecord, timerec, ittt
+DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: timealready
+END SUBROUTINE outeng_t
+
+SUBROUTINE outmix(filename)
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER :: ncid
+END SUBROUTINE outmix
+
+SUBROUTINE outmix_tau(filename)
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER :: ncid
+END SUBROUTINE outmix_tau
+
+SUBROUTINE outmix_bv(filename)
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER :: ncid
+END SUBROUTINE outmix_bv
+
+SUBROUTINE outmix_bvl(filename)
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER :: ncid
+END SUBROUTINE outmix_bvl
+
+SUBROUTINE outmix_wit(filename)
+CHARACTER(len=*), INTENT(IN) :: filename
+INTEGER :: ncid
+END SUBROUTINE outmix_wit
+
+END MODULE wamfio_mod
+

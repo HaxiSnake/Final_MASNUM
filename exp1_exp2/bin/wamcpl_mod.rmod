@@ -1,0 +1,123 @@
+
+! =================================================================================== 
+! <<Automatically generated for Rose Fortran Separate Compilation, DO NOT MODIFY IT>> 
+! =================================================================================== 
+
+MODULE wamcpl_mod
+!-------------------------------------------------------------------------------
+USE wamvar_mod
+IMPLICIT NONE
+!-------------------------------------------------------------------------------
+public init_wamcpl,set_uv0,set_uv,set_ice,mixture_limit,mixture,intact
+public mixture_wit
+private 
+!-------------------------------------------------------------------------------
+! --- Background 2D currents: ux, uy
+!     uxy=dux/dy, uxx=dux/dx, uyy=duy/dy, uyx=duy/dx
+REAL, DIMENSION(:,:), ALLOCATABLE, PUBLIC :: ux
+REAL, DIMENSION(:,:), ALLOCATABLE, PUBLIC :: uy
+REAL, DIMENSION(:,:), ALLOCATABLE, PUBLIC :: uxx
+REAL, DIMENSION(:,:), ALLOCATABLE, PUBLIC :: uxy
+REAL, DIMENSION(:,:), ALLOCATABLE, PUBLIC :: uyx
+REAL, DIMENSION(:,:), ALLOCATABLE, PUBLIC :: uyy
+!-------------------------------------------------------------------------------
+! --- For wave induced mixing & Reynolds stresses.
+REAL, DIMENSION(:), ALLOCATABLE, PUBLIC :: zyyz
+! --- Wave induced mixing (m^2/s)
+REAL, POINTER, DIMENSION(:,:,:), PUBLIC :: bv
+! --- Wave induced Reynold stresses (m^2/s^2)
+REAL, POINTER, DIMENSION(:,:,:), PUBLIC :: taubb11
+REAL, POINTER, DIMENSION(:,:,:), PUBLIC :: taubb12
+REAL, POINTER, DIMENSION(:,:,:), PUBLIC :: taubb22
+REAL, POINTER, DIMENSION(:,:,:), PUBLIC :: taubb33
+REAL, POINTER, DIMENSION(:,:,:), PUBLIC :: bvl
+REAL, POINTER, DIMENSION(:,:,:), PUBLIC :: bh1
+REAL, POINTER, DIMENSION(:,:,:), PUBLIC :: bh2
+REAL, DIMENSION(:,:,:), ALLOCATABLE, PUBLIC :: bv_wtv
+REAL, DIMENSION(:,:,:), ALLOCATABLE, PUBLIC :: bv_wtd
+!-------------------------------------------------------------------------------
+INTEGER, PRIVATE :: init_ice = 0
+DOUBLE PRECISION, PRIVATE :: last_time_ice = - 99999.d0
+REAL, DIMENSION(:,:), ALLOCATABLE, PRIVATE :: noicensp
+REAL, DIMENSION(:,:), ALLOCATABLE, PRIVATE :: icensp
+!-------------------------------------------------------------------------------
+CONTAINS
+SUBROUTINE set_ice()
+USE netcdf_mod
+USE time_mod
+INTEGER :: im, jm, ncid, i, j
+REAL, ALLOCATABLE :: xice(:), yice(:), xweight(:), yweight(:)
+INTEGER, ALLOCATABLE :: ice(:,:), ilist(:,:), jlist(:,:)
+LOGICAL :: ext
+REAL :: a, b
+INTEGER, DIMENSION(6) :: iceitime
+END SUBROUTINE set_ice
+
+SUBROUTINE set_uv()
+END SUBROUTINE set_uv
+
+SUBROUTINE set_uv0()
+END SUBROUTINE set_uv0
+
+SUBROUTINE reset_time_step()
+REAL, DIMENSION(:,:), ALLOCATABLE :: tim
+REAL :: maxtimestep, prop_time_step, iii
+END SUBROUTINE reset_time_step
+
+SUBROUTINE find_i1i2a(x,xo,im,i1,i2,a)
+INTEGER, INTENT(IN) :: im
+REAL, INTENT(IN) :: x(im), xo
+INTEGER, INTENT(OUT) :: i1, i2
+REAL, INTENT(OUT) :: a
+INTEGER :: i, flag
+END SUBROUTINE find_i1i2a
+
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: init_wamcpl
+!-------------------------------------------------------------------------
+!-------------------------------------------------------------------------
+!-------------------------------------------------------------------------
+! --- Background 2D currents: ux, uy
+!     uxy=dux/dy, uxx=dux/dx, uyy=duy/dy, uyx=duy/dx
+!-------------------------------------------------------------------------------
+! --- For wave induced mixing & Reynolds stresses.
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!###############################################################################
+SUBROUTINE intact()
+INTEGER :: kh, k, k1, i, i1, j
+REAL :: dwkk, wfk, wfk1, wsk, wsk1, wkk, wkk1, theta0, sinth, costh, ekj, ekj1
+END SUBROUTINE intact
+
+SUBROUTINE mixture()
+INTEGER :: kh, ic, ia, i, i1, j, k, k1
+REAL :: dwkk, wfk, wfk1, wsk, wsk1, wkk, wkk1, ekj, ekj1, bv1, bv2, bv3
+END SUBROUTINE mixture
+
+SUBROUTINE mixture_limit()
+INTEGER :: kh, ic, ia, i, i1, j, k, k1
+REAL :: dwkk, wfk, wfk1, wsk, wsk1, wkk, wkk1, ekj, ekj1
+REAL :: bv1, bv2, bh11, bh12, bh21, bh22
+REAL :: theta0, sinth, costh, temp
+END SUBROUTINE mixture_limit
+
+SUBROUTINE mixture_wit(gama_wt)
+REAL, INTENT(IN) :: gama_wt
+INTEGER :: kh, ic, ia, i, i1, j, k, k1
+REAL :: dwkk, wfk, wfk1, wsk, wsk1, wkk, wkk1, ekj, ekj1, dwv
+REAL, DIMENSION(:,:,:), ALLOCATABLE :: dwv3d
+REAL :: theta0, sinth, costh, temp
+REAL :: amp2, beta_wt, sigma_wt
+END SUBROUTINE mixture_wit
+
+SUBROUTINE init_wamcpl(mixflag)
+INTEGER, INTENT(IN) :: mixflag
+END SUBROUTINE init_wamcpl
+
+END MODULE wamcpl_mod
+

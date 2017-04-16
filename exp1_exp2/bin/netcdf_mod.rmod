@@ -1,0 +1,1888 @@
+
+! =================================================================================== 
+! <<Automatically generated for Rose Fortran Separate Compilation, DO NOT MODIFY IT>> 
+! =================================================================================== 
+
+MODULE netcdf_mod
+!-------------------------------------------------------------------------------
+! ******************************************************************************
+!-------------------------------------------------------------------------------
+!                                                Copyright (C) 2005 Xunqiang Yin
+!                                                MODULE NAME : netcdf_mod
+!                                                History : netcdf_mod 2.1
+!                                                History : netcdf_mod 2.0
+!                                                History : NcFileData 2.0
+!                                                Current VERSION : 2008/03/31
+!
+! --- USAGE : To output/input nc files in convenience.
+! --- DEPEND: The package of netcdf for FORTRAN.
+!
+! --- NOTE for describing of subroutine / function :
+!  A. The parameters bracketed with [], means optional parameter.
+!  B. The describe for the parameters of subroutine / function, started with:
+!   * It means input prameter;
+!   # It means output prameter;
+!   @ It means input and output prameter(it will be changed inside).
+!
+!-------------------------------------------------------------------------------
+! ******************************************************************************
+! ***                       INTERFACE DESCRIBE                               ***
+! ******************************************************************************
+!-------------------------------------------------------------------------------
+!
+!  1. subroutine open_nc(NcID, FileName, action)
+!     # integer :: NcID = unit number of opened netcdf file.
+!     * character(len=*) :: FileName = the name of netcdf file.
+!     * character :: action = 'create', 'define', 'write' or 'read'.
+!
+!-------------------------------------------------------------------------------
+!
+!  2. subroutine close_nc(NcID)
+!     * integer :: NcID = unit number of opened netcdf file.
+!
+!-------------------------------------------------------------------------------
+!
+!  3. subroutine end_define(NcID)
+!     * integer :: NcID = unit number of opened netcdf file.
+!
+!-------------------------------------------------------------------------------
+!
+!  4. subroutine dimension_define
+!     - dimension_define(NcID, DimName, DimLen, DimVarName, DimVarType [, &
+!                             DimID, DimVarID])
+!     * integer :: NcID = unit number of opened netcdf file.
+!     * character :: Dimname = the name of this dimension.
+!     * integer :: DimLen = the size of this dimension.
+!     * character :: DimVarName = the name of dimension variable name.
+!     * integer :: DimVarType = the type of dimension variable (use integer).
+!          ( nf_int1 = 1, nf_char = 2, nf_int2 = 3, nf_int = 4,
+!            nf_real = 5, nf_double = 6 )
+!     # integer :: DimID = the record number of this dimension.
+!     # integer :: DimVarID = the record number of dimension variable.
+!     ( Note: for the unlimited dimension, 'DimLen = 0 '.)
+!
+!-------------------------------------------------------------------------------
+!
+!  5. function get_dimension_len(NcID, DimName)
+!     * integer :: NcID = unit number of opened netcdf file.
+!     * character(len=*) :: DimName = the name of dimension need to get length.
+!     # integer :: get_dimension_len = the needed dimension length.
+!
+!-------------------------------------------------------------------------------
+!
+!  6. subroutine variable_define
+!
+!     --- 2 interfaces:
+!
+!    6.1 variable_define(NcID, VarName, VarType, VarDimsName [, VarID])
+!     * integer :: NcID = unit number of opened netcdf file.
+!     * character :: VarName = the name of this variable.
+!     * integer :: VarType = the type of variable (use integer).
+!          ( nf_int1 = 1, nf_char = 2, nf_int2 = 3, nf_int = 4,
+!            nf_real = 5, nf_double = 6 )
+!     * character(len=*) :: VarDimsName = the name list to which this variable
+!                           related.
+!     # integer :: VarID = the record number of this variable.
+!
+!    6.2 variable_define(NcID, VarName, VarType, VarDims [, VarID])
+!     * integer :: NcID = unit number of opened netcdf file.
+!     * character :: VarName = the name of this variable.
+!     * integer :: VarType = the type of variable (use integer).
+!          ( nf_int1 = 1, nf_char = 2, nf_int2 = 3, nf_int = 4,
+!            nf_real = 5, nf_double = 6 )
+!     * integer :: VarDims = the related DimID of this variable.
+!     # integer :: VarID = the record number of this variable.
+!
+!-------------------------------------------------------------------------------
+!
+!  7. subroutine set_attribute(NcID, AttName, Att [, VarName])
+!     * integer :: NcID = unit number of opened netcdf file.
+!     * character(len=*) :: AttName = the attribute name of netcdf file.
+!     * character(len=*)/integer/integer*1/integer*2/real/double presion ::
+!                           Att = attribute of opened netcdf file.
+!     * character(len=*) :: VarName = the owner(variable) of attribute.
+!     ( Note: for the globle attribute, VarName shouldn't be given.)
+!
+!-------------------------------------------------------------------------------
+!
+!  8. subroutine get_attribute(NcID, AttName, Att [, VarName])
+!     * integer :: NcID = unit number of opened netcdf file.
+!     * character(len=*) :: AttName = the attribute name of netcdf file.
+!     # character(len=*)/integer/integer*1/integer*2/real/double presion ::
+!                           Att = attribute of opened netcdf file.
+!     * character(len=*) :: VarName = the owner(variable) of attribute.
+!     ( Note: for the globle attribute, VarName shouldn't be given.)
+!
+!-------------------------------------------------------------------------------
+!
+!  9. subroutine writenc(NcID, VarName, Var [, RecNum, locs])
+!     * integer :: NcID = unit number of opened netcdf file.
+!     * character(len=*) :: VarName = the name of variable in netcdf file.
+!     * character(len=*)/char/integer/integer*1/integer*2/real/double presion ::
+!                          Var = the variable needed to be output.
+!     * integer :: RecNum = the record number at unlimited dimension.
+!     * integer :: locs = the start locations for output.
+!     ( Note: for the variable without unlimited dimension,
+!             RecNum shouldn't be given.)
+!
+!-------------------------------------------------------------------------------
+!
+!  10. subroutine readnc(NcID, VarName, Var [, RecNum, locs])
+!     * integer :: NcID = unit number of opened netcdf file.
+!     * character(len=*) :: VarName = the name of variable in netcdf file.
+!     # character(len=*)/char/integer/integer*1/integer*2/real/double presion ::
+!                         Var = the variable needed to be input.
+!     * integer :: RecNum = the record number at unlimited dimension.
+!     * integer :: locs = the start locations for output.
+!     ( Note: for the variable without unlimited dimension,
+!             RecNum shouldn't be given.)
+!
+!-------------------------------------------------------------------------------
+!
+!                                                --- Xunqiang Yin, 2007/04/01
+!                                                 E-Mail: XunqiangYin@gmail.com
+!
+!-------------------------------------------------------------------------------
+! ******************************************************************************
+!-------------------------------------------------------------------------------
+IMPLICIT NONE
+!-------------------------------------------------------------------------------
+public nf_double,nf_real,nf_int,nf_int2,nf_char,nf_int1
+public nf_fill_int2,nf_fill_short,nf_fill_char,nf_fill_int1,nf_fill_byte
+public nf_fill_double,nf_fill_real,nf_fill_float,nf_fill_int
+public writenc,readnc,end_define,close_nc,open_nc
+public get_attribute,set_attribute,variable_define
+public get_dimension_len,dimension_define
+private 
+!-------------------------------------------------------------------------------
+INTERFACE variable_define
+MODULE PROCEDURE variable_define1
+MODULE PROCEDURE variable_define2
+END INTERFACE 
+!-------------------------------------------------------------------------------
+INTERFACE set_attribute
+MODULE PROCEDURE set_attribute_character
+MODULE PROCEDURE set_attribute_int1
+MODULE PROCEDURE set_attribute_int2
+MODULE PROCEDURE set_attribute_int
+MODULE PROCEDURE set_attribute_real
+MODULE PROCEDURE set_attribute_double
+END INTERFACE 
+!-------------------------------------------------------------------------------
+INTERFACE get_attribute
+MODULE PROCEDURE get_attribute_character
+MODULE PROCEDURE get_attribute_int1
+MODULE PROCEDURE get_attribute_int2
+MODULE PROCEDURE get_attribute_int
+MODULE PROCEDURE get_attribute_real
+MODULE PROCEDURE get_attribute_double
+END INTERFACE 
+!-------------------------------------------------------------------------------
+INTERFACE writenc
+MODULE PROCEDURE writenc_0d_int1
+MODULE PROCEDURE writenc_0d_int2
+MODULE PROCEDURE writenc_0d_int
+MODULE PROCEDURE writenc_0d_real
+MODULE PROCEDURE writenc_0d_double
+MODULE PROCEDURE writenc_0d_text
+MODULE PROCEDURE writenc_1d_int1
+MODULE PROCEDURE writenc_1d_int2
+MODULE PROCEDURE writenc_1d_int
+MODULE PROCEDURE writenc_1d_real
+MODULE PROCEDURE writenc_1d_double
+MODULE PROCEDURE writenc_1d_text
+MODULE PROCEDURE writenc_2d_int1
+MODULE PROCEDURE writenc_2d_int2
+MODULE PROCEDURE writenc_2d_int
+MODULE PROCEDURE writenc_2d_real
+MODULE PROCEDURE writenc_2d_double
+MODULE PROCEDURE writenc_2d_text
+MODULE PROCEDURE writenc_3d_int1
+MODULE PROCEDURE writenc_3d_int2
+MODULE PROCEDURE writenc_3d_int
+MODULE PROCEDURE writenc_3d_real
+MODULE PROCEDURE writenc_3d_double
+MODULE PROCEDURE writenc_3d_text
+MODULE PROCEDURE writenc_4d_int1
+MODULE PROCEDURE writenc_4d_int2
+MODULE PROCEDURE writenc_4d_int
+MODULE PROCEDURE writenc_4d_real
+MODULE PROCEDURE writenc_4d_double
+MODULE PROCEDURE writenc_4d_text
+END INTERFACE 
+!-------------------------------------------------------------------------------
+INTERFACE readnc
+MODULE PROCEDURE readnc_0d_int1
+MODULE PROCEDURE readnc_0d_int2
+MODULE PROCEDURE readnc_0d_int
+MODULE PROCEDURE readnc_0d_real
+MODULE PROCEDURE readnc_0d_double
+MODULE PROCEDURE readnc_0d_text
+MODULE PROCEDURE readnc_1d_int1
+MODULE PROCEDURE readnc_1d_int2
+MODULE PROCEDURE readnc_1d_int
+MODULE PROCEDURE readnc_1d_real
+MODULE PROCEDURE readnc_1d_double
+MODULE PROCEDURE readnc_1d_text
+MODULE PROCEDURE readnc_2d_int1
+MODULE PROCEDURE readnc_2d_int2
+MODULE PROCEDURE readnc_2d_int
+MODULE PROCEDURE readnc_2d_real
+MODULE PROCEDURE readnc_2d_double
+MODULE PROCEDURE readnc_2d_text
+MODULE PROCEDURE readnc_3d_int1
+MODULE PROCEDURE readnc_3d_int2
+MODULE PROCEDURE readnc_3d_int
+MODULE PROCEDURE readnc_3d_real
+MODULE PROCEDURE readnc_3d_double
+MODULE PROCEDURE readnc_3d_text
+MODULE PROCEDURE readnc_4d_int1
+MODULE PROCEDURE readnc_4d_int2
+MODULE PROCEDURE readnc_4d_int
+MODULE PROCEDURE readnc_4d_real
+MODULE PROCEDURE readnc_4d_double
+MODULE PROCEDURE readnc_4d_text
+END INTERFACE 
+INTEGER, PRIVATE :: nf_byte
+INTEGER, PUBLIC :: nf_int1
+INTEGER, PUBLIC :: nf_char
+INTEGER, PRIVATE :: nf_short
+INTEGER, PUBLIC :: nf_int2
+INTEGER, PUBLIC :: nf_int
+INTEGER, PRIVATE :: nf_float
+INTEGER, PUBLIC :: nf_real
+INTEGER, PUBLIC :: nf_double
+parameter(nf_byte = 1) 
+parameter(nf_int1 = nf_byte) 
+parameter(nf_char = 2) 
+parameter(nf_short = 3) 
+parameter(nf_int2 = nf_short) 
+parameter(nf_int = 4) 
+parameter(nf_float = 5) 
+parameter(nf_real = nf_float) 
+parameter(nf_double = 6) 
+INTEGER, PUBLIC :: nf_fill_byte
+INTEGER, PUBLIC :: nf_fill_int1
+INTEGER, PUBLIC :: nf_fill_char
+INTEGER, PUBLIC :: nf_fill_short
+INTEGER, PUBLIC :: nf_fill_int2
+INTEGER, PUBLIC :: nf_fill_int
+REAL, PUBLIC :: nf_fill_float
+REAL, PUBLIC :: nf_fill_real
+DOUBLE PRECISION, PUBLIC :: nf_fill_double
+parameter(nf_fill_byte = - 127) 
+parameter(nf_fill_int1 = nf_fill_byte) 
+parameter(nf_fill_char = 0) 
+parameter(nf_fill_short = - 32767) 
+parameter(nf_fill_int2 = nf_fill_short) 
+parameter(nf_fill_int = - 2147483647) 
+parameter(nf_fill_float = 9.9692099683868690e+36) 
+parameter(nf_fill_real = nf_fill_float) 
+parameter(nf_fill_double = 9.9692099683868690e+36) 
+INTEGER, PRIVATE :: nf_nowrite
+INTEGER, PRIVATE :: nf_write
+INTEGER, PRIVATE :: nf_clobber
+INTEGER, PRIVATE :: nf_noclobber
+INTEGER, PRIVATE :: nf_fill
+INTEGER, PRIVATE :: nf_nofill
+INTEGER, PRIVATE :: nf_lock
+INTEGER, PRIVATE :: nf_share
+INTEGER, PRIVATE :: nf_64bit_offset
+INTEGER, PRIVATE :: nf_sizehint_default
+INTEGER, PRIVATE :: nf_align_chunk
+INTEGER, PRIVATE :: nf_format_classic
+INTEGER, PRIVATE :: nf_format_64bit
+parameter(nf_nowrite = 0) 
+parameter(nf_write = 1) 
+parameter(nf_clobber = 0) 
+parameter(nf_noclobber = 4) 
+parameter(nf_fill = 0) 
+parameter(nf_nofill = 256) 
+parameter(nf_lock = 1024) 
+parameter(nf_share = 2048) 
+parameter(nf_64bit_offset = 512) 
+parameter(nf_sizehint_default = 0) 
+parameter(nf_align_chunk = - 1) 
+parameter(nf_format_classic = 1) 
+parameter(nf_format_64bit = 2) 
+INTEGER, PRIVATE :: nf_unlimited
+parameter(nf_unlimited = 0) 
+INTEGER, PRIVATE :: nf_global
+parameter(nf_global = 0) 
+INTEGER, PRIVATE :: nf_max_dims
+INTEGER, PRIVATE :: nf_max_attrs
+INTEGER, PRIVATE :: nf_max_vars
+INTEGER, PRIVATE :: nf_max_name
+INTEGER, PRIVATE :: nf_max_var_dims
+parameter(nf_max_dims = 1024) 
+parameter(nf_max_attrs = 8192) 
+parameter(nf_max_vars = 8192) 
+parameter(nf_max_name = 256) 
+parameter(nf_max_var_dims = nf_max_dims) 
+INTEGER, PRIVATE :: nf_noerr
+INTEGER, PRIVATE :: nf_ebadid
+INTEGER, PRIVATE :: nf_eexist
+INTEGER, PRIVATE :: nf_einval
+INTEGER, PRIVATE :: nf_eperm
+INTEGER, PRIVATE :: nf_enotindefine
+INTEGER, PRIVATE :: nf_eindefine
+INTEGER, PRIVATE :: nf_einvalcoords
+INTEGER, PRIVATE :: nf_emaxdims
+INTEGER, PRIVATE :: nf_enameinuse
+INTEGER, PRIVATE :: nf_enotatt
+INTEGER, PRIVATE :: nf_emaxatts
+INTEGER, PRIVATE :: nf_ebadtype
+INTEGER, PRIVATE :: nf_ebaddim
+INTEGER, PRIVATE :: nf_eunlimpos
+INTEGER, PRIVATE :: nf_emaxvars
+INTEGER, PRIVATE :: nf_enotvar
+INTEGER, PRIVATE :: nf_eglobal
+INTEGER, PRIVATE :: nf_enotnc
+INTEGER, PRIVATE :: nf_ests
+INTEGER, PRIVATE :: nf_emaxname
+INTEGER, PRIVATE :: nf_eunlimit
+INTEGER, PRIVATE :: nf_enorecvars
+INTEGER, PRIVATE :: nf_echar
+INTEGER, PRIVATE :: nf_eedge
+INTEGER, PRIVATE :: nf_estride
+INTEGER, PRIVATE :: nf_ebadname
+INTEGER, PRIVATE :: nf_erange
+INTEGER, PRIVATE :: nf_enomem
+INTEGER, PRIVATE :: nf_evarsize
+INTEGER, PRIVATE :: nf_edimsize
+INTEGER, PRIVATE :: nf_etrunc
+parameter(nf_noerr = 0) 
+parameter(nf_ebadid = - 33) 
+parameter(nf_eexist = - 35) 
+parameter(nf_einval = - 36) 
+parameter(nf_eperm = - 37) 
+parameter(nf_enotindefine = - 38) 
+parameter(nf_eindefine = - 39) 
+parameter(nf_einvalcoords = - 40) 
+parameter(nf_emaxdims = - 41) 
+parameter(nf_enameinuse = - 42) 
+parameter(nf_enotatt = - 43) 
+parameter(nf_emaxatts = - 44) 
+parameter(nf_ebadtype = - 45) 
+parameter(nf_ebaddim = - 46) 
+parameter(nf_eunlimpos = - 47) 
+parameter(nf_emaxvars = - 48) 
+parameter(nf_enotvar = - 49) 
+parameter(nf_eglobal = - 50) 
+parameter(nf_enotnc = - 51) 
+parameter(nf_ests = - 52) 
+parameter(nf_emaxname = - 53) 
+parameter(nf_eunlimit = - 54) 
+parameter(nf_enorecvars = - 55) 
+parameter(nf_echar = - 56) 
+parameter(nf_eedge = - 57) 
+parameter(nf_estride = - 58) 
+parameter(nf_ebadname = - 59) 
+parameter(nf_erange = - 60) 
+parameter(nf_enomem = - 61) 
+parameter(nf_evarsize = - 62) 
+parameter(nf_edimsize = - 63) 
+parameter(nf_etrunc = - 64) 
+INTEGER, PRIVATE :: nf_fatal
+INTEGER, PRIVATE :: nf_verbose
+parameter(nf_fatal = 1) 
+parameter(nf_verbose = 2) 
+CHARACTER(len=80), PRIVATE :: nf_inq_libvers
+external :: nf_inq_libvers
+CHARACTER(len=80), PRIVATE :: nf_strerror
+external :: nf_strerror
+LOGICAL, PRIVATE :: nf_issyserr
+external :: nf_issyserr
+INTEGER, PRIVATE :: nf_inq_base_pe
+external :: nf_inq_base_pe
+INTEGER, PRIVATE :: nf_set_base_pe
+external :: nf_set_base_pe
+INTEGER, PRIVATE :: nf_create
+external :: nf_create
+INTEGER, PRIVATE :: nf__create
+external :: nf__create
+INTEGER, PRIVATE :: nf__create_mp
+external :: nf__create_mp
+INTEGER, PRIVATE :: nf_open
+external :: nf_open
+INTEGER, PRIVATE :: nf__open
+external :: nf__open
+INTEGER, PRIVATE :: nf__open_mp
+external :: nf__open_mp
+INTEGER, PRIVATE :: nf_set_fill
+external :: nf_set_fill
+INTEGER, PRIVATE :: nf_set_default_format
+external :: nf_set_default_format
+INTEGER, PRIVATE :: nf_redef
+external :: nf_redef
+INTEGER, PRIVATE :: nf_enddef
+external :: nf_enddef
+INTEGER, PRIVATE :: nf__enddef
+external :: nf__enddef
+INTEGER, PRIVATE :: nf_sync
+external :: nf_sync
+INTEGER, PRIVATE :: nf_abort
+external :: nf_abort
+INTEGER, PRIVATE :: nf_close
+external :: nf_close
+INTEGER, PRIVATE :: nf_delete
+external :: nf_delete
+INTEGER, PRIVATE :: nf_inq
+external :: nf_inq
+INTEGER, PRIVATE :: nf_inq_ndims
+external :: nf_inq_ndims
+INTEGER, PRIVATE :: nf_inq_nvars
+external :: nf_inq_nvars
+INTEGER, PRIVATE :: nf_inq_natts
+external :: nf_inq_natts
+INTEGER, PRIVATE :: nf_inq_unlimdim
+external :: nf_inq_unlimdim
+INTEGER, PRIVATE :: nf_inq_format
+external :: nf_inq_format
+INTEGER, PRIVATE :: nf_def_dim
+external :: nf_def_dim
+INTEGER, PRIVATE :: nf_inq_dimid
+external :: nf_inq_dimid
+INTEGER, PRIVATE :: nf_inq_dim
+external :: nf_inq_dim
+INTEGER, PRIVATE :: nf_inq_dimname
+external :: nf_inq_dimname
+INTEGER, PRIVATE :: nf_inq_dimlen
+external :: nf_inq_dimlen
+INTEGER, PRIVATE :: nf_rename_dim
+external :: nf_rename_dim
+INTEGER, PRIVATE :: nf_inq_att
+external :: nf_inq_att
+INTEGER, PRIVATE :: nf_inq_attid
+external :: nf_inq_attid
+INTEGER, PRIVATE :: nf_inq_atttype
+external :: nf_inq_atttype
+INTEGER, PRIVATE :: nf_inq_attlen
+external :: nf_inq_attlen
+INTEGER, PRIVATE :: nf_inq_attname
+external :: nf_inq_attname
+INTEGER, PRIVATE :: nf_copy_att
+external :: nf_copy_att
+INTEGER, PRIVATE :: nf_rename_att
+external :: nf_rename_att
+INTEGER, PRIVATE :: nf_del_att
+external :: nf_del_att
+INTEGER, PRIVATE :: nf_put_att_text
+external :: nf_put_att_text
+INTEGER, PRIVATE :: nf_get_att_text
+external :: nf_get_att_text
+INTEGER, PRIVATE :: nf_put_att_int1
+external :: nf_put_att_int1
+INTEGER, PRIVATE :: nf_get_att_int1
+external :: nf_get_att_int1
+INTEGER, PRIVATE :: nf_put_att_int2
+external :: nf_put_att_int2
+INTEGER, PRIVATE :: nf_get_att_int2
+external :: nf_get_att_int2
+INTEGER, PRIVATE :: nf_put_att_int
+external :: nf_put_att_int
+INTEGER, PRIVATE :: nf_get_att_int
+external :: nf_get_att_int
+INTEGER, PRIVATE :: nf_put_att_real
+external :: nf_put_att_real
+INTEGER, PRIVATE :: nf_get_att_real
+external :: nf_get_att_real
+INTEGER, PRIVATE :: nf_put_att_double
+external :: nf_put_att_double
+INTEGER, PRIVATE :: nf_get_att_double
+external :: nf_get_att_double
+INTEGER, PRIVATE :: nf_def_var
+external :: nf_def_var
+INTEGER, PRIVATE :: nf_inq_var
+external :: nf_inq_var
+INTEGER, PRIVATE :: nf_inq_varid
+external :: nf_inq_varid
+INTEGER, PRIVATE :: nf_inq_varname
+external :: nf_inq_varname
+INTEGER, PRIVATE :: nf_inq_vartype
+external :: nf_inq_vartype
+INTEGER, PRIVATE :: nf_inq_varndims
+external :: nf_inq_varndims
+INTEGER, PRIVATE :: nf_inq_vardimid
+external :: nf_inq_vardimid
+INTEGER, PRIVATE :: nf_inq_varnatts
+external :: nf_inq_varnatts
+INTEGER, PRIVATE :: nf_rename_var
+external :: nf_rename_var
+INTEGER, PRIVATE :: nf_copy_var
+external :: nf_copy_var
+INTEGER, PRIVATE :: nf_put_var_text
+external :: nf_put_var_text
+INTEGER, PRIVATE :: nf_get_var_text
+external :: nf_get_var_text
+INTEGER, PRIVATE :: nf_put_var_int1
+external :: nf_put_var_int1
+INTEGER, PRIVATE :: nf_get_var_int1
+external :: nf_get_var_int1
+INTEGER, PRIVATE :: nf_put_var_int2
+external :: nf_put_var_int2
+INTEGER, PRIVATE :: nf_get_var_int2
+external :: nf_get_var_int2
+INTEGER, PRIVATE :: nf_put_var_int
+external :: nf_put_var_int
+INTEGER, PRIVATE :: nf_get_var_int
+external :: nf_get_var_int
+INTEGER, PRIVATE :: nf_put_var_real
+external :: nf_put_var_real
+INTEGER, PRIVATE :: nf_get_var_real
+external :: nf_get_var_real
+INTEGER, PRIVATE :: nf_put_var_double
+external :: nf_put_var_double
+INTEGER, PRIVATE :: nf_get_var_double
+external :: nf_get_var_double
+INTEGER, PRIVATE :: nf_put_var1_text
+external :: nf_put_var1_text
+INTEGER, PRIVATE :: nf_get_var1_text
+external :: nf_get_var1_text
+INTEGER, PRIVATE :: nf_put_var1_int1
+external :: nf_put_var1_int1
+INTEGER, PRIVATE :: nf_get_var1_int1
+external :: nf_get_var1_int1
+INTEGER, PRIVATE :: nf_put_var1_int2
+external :: nf_put_var1_int2
+INTEGER, PRIVATE :: nf_get_var1_int2
+external :: nf_get_var1_int2
+INTEGER, PRIVATE :: nf_put_var1_int
+external :: nf_put_var1_int
+INTEGER, PRIVATE :: nf_get_var1_int
+external :: nf_get_var1_int
+INTEGER, PRIVATE :: nf_put_var1_real
+external :: nf_put_var1_real
+INTEGER, PRIVATE :: nf_get_var1_real
+external :: nf_get_var1_real
+INTEGER, PRIVATE :: nf_put_var1_double
+external :: nf_put_var1_double
+INTEGER, PRIVATE :: nf_get_var1_double
+external :: nf_get_var1_double
+INTEGER, PRIVATE :: nf_put_vara_text
+external :: nf_put_vara_text
+INTEGER, PRIVATE :: nf_get_vara_text
+external :: nf_get_vara_text
+INTEGER, PRIVATE :: nf_put_vara_int1
+external :: nf_put_vara_int1
+INTEGER, PRIVATE :: nf_get_vara_int1
+external :: nf_get_vara_int1
+INTEGER, PRIVATE :: nf_put_vara_int2
+external :: nf_put_vara_int2
+INTEGER, PRIVATE :: nf_get_vara_int2
+external :: nf_get_vara_int2
+INTEGER, PRIVATE :: nf_put_vara_int
+external :: nf_put_vara_int
+INTEGER, PRIVATE :: nf_get_vara_int
+external :: nf_get_vara_int
+INTEGER, PRIVATE :: nf_put_vara_real
+external :: nf_put_vara_real
+INTEGER, PRIVATE :: nf_get_vara_real
+external :: nf_get_vara_real
+INTEGER, PRIVATE :: nf_put_vara_double
+external :: nf_put_vara_double
+INTEGER, PRIVATE :: nf_get_vara_double
+external :: nf_get_vara_double
+INTEGER, PRIVATE :: nf_put_vars_text
+external :: nf_put_vars_text
+INTEGER, PRIVATE :: nf_get_vars_text
+external :: nf_get_vars_text
+INTEGER, PRIVATE :: nf_put_vars_int1
+external :: nf_put_vars_int1
+INTEGER, PRIVATE :: nf_get_vars_int1
+external :: nf_get_vars_int1
+INTEGER, PRIVATE :: nf_put_vars_int2
+external :: nf_put_vars_int2
+INTEGER, PRIVATE :: nf_get_vars_int2
+external :: nf_get_vars_int2
+INTEGER, PRIVATE :: nf_put_vars_int
+external :: nf_put_vars_int
+INTEGER, PRIVATE :: nf_get_vars_int
+external :: nf_get_vars_int
+INTEGER, PRIVATE :: nf_put_vars_real
+external :: nf_put_vars_real
+INTEGER, PRIVATE :: nf_get_vars_real
+external :: nf_get_vars_real
+INTEGER, PRIVATE :: nf_put_vars_double
+external :: nf_put_vars_double
+INTEGER, PRIVATE :: nf_get_vars_double
+external :: nf_get_vars_double
+INTEGER, PRIVATE :: nf_put_varm_text
+external :: nf_put_varm_text
+INTEGER, PRIVATE :: nf_get_varm_text
+external :: nf_get_varm_text
+INTEGER, PRIVATE :: nf_put_varm_int1
+external :: nf_put_varm_int1
+INTEGER, PRIVATE :: nf_get_varm_int1
+external :: nf_get_varm_int1
+INTEGER, PRIVATE :: nf_put_varm_int2
+external :: nf_put_varm_int2
+INTEGER, PRIVATE :: nf_get_varm_int2
+external :: nf_get_varm_int2
+INTEGER, PRIVATE :: nf_put_varm_int
+external :: nf_put_varm_int
+INTEGER, PRIVATE :: nf_get_varm_int
+external :: nf_get_varm_int
+INTEGER, PRIVATE :: nf_put_varm_real
+external :: nf_put_varm_real
+INTEGER, PRIVATE :: nf_get_varm_real
+external :: nf_get_varm_real
+INTEGER, PRIVATE :: nf_put_varm_double
+external :: nf_put_varm_double
+INTEGER, PRIVATE :: nf_get_varm_double
+external :: nf_get_varm_double
+INTEGER, PRIVATE :: nccre
+INTEGER, PRIVATE :: ncopn
+INTEGER, PRIVATE :: ncddef
+INTEGER, PRIVATE :: ncdid
+INTEGER, PRIVATE :: ncvdef
+INTEGER, PRIVATE :: ncvid
+INTEGER, PRIVATE :: nctlen
+INTEGER, PRIVATE :: ncsfil
+external :: nccre
+external :: ncopn
+external :: ncddef
+external :: ncdid
+external :: ncvdef
+external :: ncvid
+external :: nctlen
+external :: ncsfil
+INTEGER, PRIVATE :: ncrdwr
+INTEGER, PRIVATE :: nccreat
+INTEGER, PRIVATE :: ncexcl
+INTEGER, PRIVATE :: ncindef
+INTEGER, PRIVATE :: ncnsync
+INTEGER, PRIVATE :: nchsync
+INTEGER, PRIVATE :: ncndirty
+INTEGER, PRIVATE :: nchdirty
+INTEGER, PRIVATE :: nclink
+INTEGER, PRIVATE :: ncnowrit
+INTEGER, PRIVATE :: ncwrite
+INTEGER, PRIVATE :: ncclob
+INTEGER, PRIVATE :: ncnoclob
+INTEGER, PRIVATE :: ncglobal
+INTEGER, PRIVATE :: ncfill
+INTEGER, PRIVATE :: ncnofill
+INTEGER, PRIVATE :: maxncop
+INTEGER, PRIVATE :: maxncdim
+INTEGER, PRIVATE :: maxncatt
+INTEGER, PRIVATE :: maxncvar
+INTEGER, PRIVATE :: maxncnam
+INTEGER, PRIVATE :: maxvdims
+INTEGER, PRIVATE :: ncnoerr
+INTEGER, PRIVATE :: ncebadid
+INTEGER, PRIVATE :: ncenfile
+INTEGER, PRIVATE :: nceexist
+INTEGER, PRIVATE :: nceinval
+INTEGER, PRIVATE :: nceperm
+INTEGER, PRIVATE :: ncenotin
+INTEGER, PRIVATE :: nceindef
+INTEGER, PRIVATE :: ncecoord
+INTEGER, PRIVATE :: ncemaxds
+INTEGER, PRIVATE :: ncename
+INTEGER, PRIVATE :: ncenoatt
+INTEGER, PRIVATE :: ncemaxat
+INTEGER, PRIVATE :: ncebadty
+INTEGER, PRIVATE :: ncebadd
+INTEGER, PRIVATE :: ncests
+INTEGER, PRIVATE :: nceunlim
+INTEGER, PRIVATE :: ncemaxvs
+INTEGER, PRIVATE :: ncenotvr
+INTEGER, PRIVATE :: nceglob
+INTEGER, PRIVATE :: ncenotnc
+INTEGER, PRIVATE :: ncfoobar
+INTEGER, PRIVATE :: ncsyserr
+INTEGER, PRIVATE :: ncfatal
+INTEGER, PRIVATE :: ncverbos
+INTEGER, PRIVATE :: ncentool
+INTEGER, PRIVATE :: ncbyte
+INTEGER, PRIVATE :: ncchar
+INTEGER, PRIVATE :: ncshort
+INTEGER, PRIVATE :: nclong
+INTEGER, PRIVATE :: ncfloat
+INTEGER, PRIVATE :: ncdouble
+parameter(ncbyte = 1) 
+parameter(ncchar = 2) 
+parameter(ncshort = 3) 
+parameter(nclong = 4) 
+parameter(ncfloat = 5) 
+parameter(ncdouble = 6) 
+parameter(ncrdwr = 1) 
+parameter(nccreat = 2) 
+parameter(ncexcl = 4) 
+parameter(ncindef = 8) 
+parameter(ncnsync = 16) 
+parameter(nchsync = 32) 
+parameter(ncndirty = 64) 
+parameter(nchdirty = 128) 
+parameter(ncfill = 0) 
+parameter(ncnofill = 256) 
+parameter(nclink = 32768) 
+parameter(ncnowrit = 0) 
+parameter(ncwrite = ncrdwr) 
+parameter(ncclob = nf_clobber) 
+parameter(ncnoclob = nf_noclobber) 
+INTEGER, PRIVATE :: ncunlim
+parameter(ncunlim = 0) 
+parameter(ncglobal = 0) 
+parameter(maxncop = 64) 
+parameter(maxncdim = 1024) 
+parameter(maxncatt = 8192) 
+parameter(maxncvar = 8192) 
+parameter(maxncnam = 256) 
+parameter(maxvdims = maxncdim) 
+parameter(ncnoerr = nf_noerr) 
+parameter(ncebadid = nf_ebadid) 
+parameter(ncenfile = - 31) 
+parameter(nceexist = nf_eexist) 
+parameter(nceinval = nf_einval) 
+parameter(nceperm = nf_eperm) 
+parameter(ncenotin = nf_enotindefine) 
+parameter(nceindef = nf_eindefine) 
+parameter(ncecoord = nf_einvalcoords) 
+parameter(ncemaxds = nf_emaxdims) 
+parameter(ncename = nf_enameinuse) 
+parameter(ncenoatt = nf_enotatt) 
+parameter(ncemaxat = nf_emaxatts) 
+parameter(ncebadty = nf_ebadtype) 
+parameter(ncebadd = nf_ebaddim) 
+parameter(nceunlim = nf_eunlimpos) 
+parameter(ncemaxvs = nf_emaxvars) 
+parameter(ncenotvr = nf_enotvar) 
+parameter(nceglob = nf_eglobal) 
+parameter(ncenotnc = nf_enotnc) 
+parameter(ncests = nf_ests) 
+parameter(ncentool = nf_emaxname) 
+parameter(ncfoobar = 32) 
+parameter(ncsyserr = - 31) 
+parameter(ncfatal = 1) 
+parameter(ncverbos = 2) 
+INTEGER, PRIVATE :: filbyte
+INTEGER, PRIVATE :: filchar
+INTEGER, PRIVATE :: filshort
+INTEGER, PRIVATE :: fillong
+REAL, PRIVATE :: filfloat
+DOUBLE PRECISION, PRIVATE :: fildoub
+parameter(filbyte = - 127) 
+parameter(filchar = 0) 
+parameter(filshort = - 32767) 
+parameter(fillong = - 2147483647) 
+parameter(filfloat = 9.9692099683868690e+36) 
+parameter(fildoub = 9.9692099683868690e+36) 
+!-------------------------------------------------------------------------------
+INTEGER, PRIVATE :: status, VarID
+CHARACTER(len=80), PRIVATE :: version = 'netcdf_mod 2.1, ' // 'by Xunqiang Yin, 2008-3-31 17:15.'
+!-------------------------------------------------------------------------------
+CONTAINS
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To handle errors for NCFile input or output.
+!*DeckYinxq: check_err
+SUBROUTINE check_err(status)
+INTEGER, INTENT(IN) :: status
+END SUBROUTINE check_err
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To open a NcFile. (By create, if new; By redefine, if old.)
+!*DeckYinxq: open_nc_def
+SUBROUTINE open_nc(NcID,FileName,action)
+CHARACTER, INTENT(IN) :: FileName*(*), action*(*)
+INTEGER, INTENT(IN) :: NcID
+LOGICAL :: alive
+END SUBROUTINE open_nc
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Close a openning NcFile.
+!*DeckYinxq: WriteNC1DInt2
+SUBROUTINE close_nc(NcID)
+INTEGER, INTENT(IN) :: NcID
+END SUBROUTINE close_nc
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To end define.
+!*DeckYinxq: end_define
+SUBROUTINE end_define(NcID)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=80) :: lib_version
+CHARACTER(len=80) :: version = 'netcdf_mod 2.1, ' // 'by Xunqiang Yin, 2008-3-31 23:15.'
+CHARACTER :: dd*(10), tt*(10)
+CHARACTER(len=19) :: ts
+END SUBROUTINE end_define
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define dimension for a NcFile.
+!*DeckYinxq: dimension_define_notype
+SUBROUTINE dimension_define(NcID,DimName,DimLen,DimVarName,DimVarType,DimID,DimVarID)
+CHARACTER, INTENT(IN) :: DimName*(*), DimVarName*(*)
+INTEGER, INTENT(IN) :: NcID, DimLen, DimVarType
+INTEGER, INTENT(OUT), OPTIONAL :: DimID, DimVarID
+INTEGER :: DimID1, DimVarID1
+END SUBROUTINE dimension_define
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Get the dimension length,
+!*DeckYinxq: get_dimension_len
+INTEGER FUNCTION get_dimension_len(NcID,DimName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: DimName
+INTEGER :: DimID
+END  FUNCTION get_dimension_len
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define variables.
+!*DeckYinxq: variable_define1
+SUBROUTINE variable_define1(NcID,VarName,VarType,VarDims,VarID)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, INTENT(IN) :: VarType, VarDims(:)
+INTEGER, INTENT(OUT), OPTIONAL :: VarID
+INTEGER :: VarRank, VarID1
+END SUBROUTINE variable_define1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define variables.
+!*DeckYinxq: variable_define2
+SUBROUTINE variable_define2(NcID,VarName,VarType,VarDimsName,VarID)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, INTENT(IN) :: VarType
+CHARACTER(len=*), DIMENSION(:), INTENT(IN) :: VarDimsName
+INTEGER, INTENT(OUT), OPTIONAL :: VarID
+INTEGER :: VarRank, VarID1, i
+INTEGER, DIMENSION(:), ALLOCATABLE :: VarDims
+END SUBROUTINE variable_define2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: character
+!*DeckYinxq: set_attribute_character
+SUBROUTINE set_attribute_character(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER, INTENT(IN) :: AttName*(*), attribute*(*)
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+END SUBROUTINE set_attribute_character
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: int1
+!*DeckYinxq: set_attribute_int1
+SUBROUTINE set_attribute_int1(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+INTEGER(kind=1), INTENT(IN) :: attribute
+END SUBROUTINE set_attribute_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: int2
+!*DeckYinxq: set_attribute_int2
+SUBROUTINE set_attribute_int2(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+INTEGER(kind=2), INTENT(IN) :: attribute
+END SUBROUTINE set_attribute_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: int
+!*DeckYinxq: set_attribute_int
+SUBROUTINE set_attribute_int(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+INTEGER, INTENT(IN) :: attribute
+END SUBROUTINE set_attribute_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: real
+!*DeckYinxq: set_attribute_real
+SUBROUTINE set_attribute_real(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+REAL, INTENT(IN) :: attribute
+END SUBROUTINE set_attribute_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: double
+!*DeckYinxq: set_attribute_double
+SUBROUTINE set_attribute_double(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+DOUBLE PRECISION, INTENT(IN) :: attribute
+END SUBROUTINE set_attribute_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: character
+!*DeckYinxq: get_attribute_character
+SUBROUTINE get_attribute_character(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(OUT) :: attribute
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+END SUBROUTINE get_attribute_character
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: int1
+!*DeckYinxq: get_attribute_int1
+SUBROUTINE get_attribute_int1(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+INTEGER(kind=1), INTENT(OUT) :: attribute
+END SUBROUTINE get_attribute_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: int2
+!*DeckYinxq: get_attribute_int2
+SUBROUTINE get_attribute_int2(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+INTEGER(kind=2), INTENT(OUT) :: attribute
+END SUBROUTINE get_attribute_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: int
+!*DeckYinxq: get_attribute_int
+SUBROUTINE get_attribute_int(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+INTEGER, INTENT(OUT) :: attribute
+END SUBROUTINE get_attribute_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: real
+!*DeckYinxq: get_attribute_real
+SUBROUTINE get_attribute_real(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+REAL, INTENT(OUT) :: attribute
+END SUBROUTINE get_attribute_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- To define attribute: double
+!*DeckYinxq: get_attribute_double
+SUBROUTINE get_attribute_double(NcID,AttName,attribute,VarName)
+INTEGER, INTENT(IN) :: NcID
+CHARACTER(len=*), INTENT(IN) :: AttName
+CHARACTER(len=*), INTENT(IN), OPTIONAL :: VarName
+DOUBLE PRECISION, INTENT(OUT) :: attribute
+END SUBROUTINE get_attribute_double
+
+!===================================== 0-d =====================================
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write data of 0D or unlimite dims var into NC file.
+!*DeckYinxq: writenc_0d_int1
+SUBROUTINE writenc_0d_int1(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE writenc_0d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write data of 0D or unlimite dims var into NC file.
+!*DeckYinxq: writenc_0d_int2
+SUBROUTINE writenc_0d_int2(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE writenc_0d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write data of 0D or unlimite dims var into NC file.
+!*DeckYinxq: writenc_0d_int
+SUBROUTINE writenc_0d_int(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE writenc_0d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write data of 0D or unlimite dims var into NC file.
+!*DeckYinxq: writenc_0d_real
+SUBROUTINE writenc_0d_real(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE writenc_0d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write data of 0D or unlimite dims var into NC file.
+!*DeckYinxq: writenc_0d_double
+SUBROUTINE writenc_0d_double(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE writenc_0d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write data of 0D or unlimite dims var into NC file.
+!*DeckYinxq: writenc_0d_text
+SUBROUTINE writenc_0d_text(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER :: starts(2), cont(2)
+END SUBROUTINE writenc_0d_text
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read data of 0D or unlimite dims var from NC file.
+!*DeckYinxq: readnc_0d_int1
+SUBROUTINE readnc_0d_int1(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE readnc_0d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read data of 0D or unlimite dims var from NC file.
+!*DeckYinxq: readnc_0d_int2
+SUBROUTINE readnc_0d_int2(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE readnc_0d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read data of 0D or unlimite dims var from NC file.
+!*DeckYinxq: readnc_0d_int
+SUBROUTINE readnc_0d_int(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE readnc_0d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read data of 0D or unlimite dims var from NC file.
+!*DeckYinxq: readnc_0d_real
+SUBROUTINE readnc_0d_real(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE readnc_0d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read data of 0D or unlimite dims var from NC file.
+!*DeckYinxq: readnc_0d_double
+SUBROUTINE readnc_0d_double(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+END SUBROUTINE readnc_0d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read data of 0D or unlimite dims var from NC file.
+!*DeckYinxq: readnc_0d_text
+SUBROUTINE readnc_0d_text(ncid,VarName,Var,RecNum)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER :: starts(2), cont(2)
+END SUBROUTINE readnc_0d_text
+
+!===================================== 1-d =====================================
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 1D data into NC file: int1
+!*DeckYinxq: writenc_1d_int1
+SUBROUTINE writenc_1d_int1(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), DIMENSION(:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_1d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 1D data into NC file: int2
+!*DeckYinxq: writenc_1d_int2
+SUBROUTINE writenc_1d_int2(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), DIMENSION(:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_1d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 1D data into NC file: int
+!*DeckYinxq: writenc_1d_int
+SUBROUTINE writenc_1d_int(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, DIMENSION(:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_1d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 1D data into NC file: real
+!*DeckYinxq: writenc_1d_real
+SUBROUTINE writenc_1d_real(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, DIMENSION(:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_1d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 1D data into NC file: double
+!*DeckYinxq: writenc_1d_double
+SUBROUTINE writenc_1d_double(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, DIMENSION(:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_1d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 1D data into NC file: double
+!*DeckYinxq: writenc_1d_text
+SUBROUTINE writenc_1d_text(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), DIMENSION(:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 2), counts(DimNum + 2)
+END SUBROUTINE writenc_1d_text
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 1D data from NC file: int1
+!*DeckYinxq: readnc_1d_int1
+SUBROUTINE readnc_1d_int1(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), DIMENSION(:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_1d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 1D data from NC file: int2
+!*DeckYinxq: readnc_1d_int2
+SUBROUTINE readnc_1d_int2(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), DIMENSION(:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_1d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 1D data from NC file: int
+!*DeckYinxq: readnc_1d_int
+SUBROUTINE readnc_1d_int(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, DIMENSION(:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_1d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 1D data from NC file: real
+!*DeckYinxq: readnc_1d_real
+SUBROUTINE readnc_1d_real(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, DIMENSION(:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_1d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 1D data from NC file: double
+!*DeckYinxq: readnc_1d_double
+SUBROUTINE readnc_1d_double(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, DIMENSION(:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_1d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 1D data from NC file: double
+!*DeckYinxq: readnc_1d_text
+SUBROUTINE readnc_1d_text(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), DIMENSION(:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 1
+INTEGER :: starts(DimNum + 2), counts(DimNum + 2)
+END SUBROUTINE readnc_1d_text
+
+!===================================== 2-d =====================================
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 2D data into NC file: int1
+!*DeckYinxq: writenc_2d_int1
+SUBROUTINE writenc_2d_int1(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), DIMENSION(:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_2d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 2D data into NC file: int2
+!*DeckYinxq: writenc_2d_int2
+SUBROUTINE writenc_2d_int2(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), DIMENSION(:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_2d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 2D data into NC file: int
+!*DeckYinxq: writenc_2d_int
+SUBROUTINE writenc_2d_int(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, DIMENSION(:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_2d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 2D data into NC file: real
+!*DeckYinxq: writenc_2d_real
+SUBROUTINE writenc_2d_real(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, DIMENSION(:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_2d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 2D data into NC file: double
+!*DeckYinxq: writenc_2d_double
+SUBROUTINE writenc_2d_double(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, DIMENSION(:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_2d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 2D data into NC file: double
+!*DeckYinxq: writenc_2d_text
+SUBROUTINE writenc_2d_text(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), DIMENSION(:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 2), counts(DimNum + 2)
+END SUBROUTINE writenc_2d_text
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 2D data from NC file: int1
+!*DeckYinxq: readnc_2d_int1
+SUBROUTINE readnc_2d_int1(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), DIMENSION(:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_2d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 2D data from NC file: int2
+!*DeckYinxq: readnc_2d_int2
+SUBROUTINE readnc_2d_int2(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), DIMENSION(:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_2d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 2D data from NC file: int
+!*DeckYinxq: readnc_2d_int
+SUBROUTINE readnc_2d_int(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, DIMENSION(:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_2d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 2D data from NC file: real
+!*DeckYinxq: readnc_2d_real
+SUBROUTINE readnc_2d_real(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, DIMENSION(:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_2d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 2D data from NC file: double
+!*DeckYinxq: readnc_2d_double
+SUBROUTINE readnc_2d_double(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, DIMENSION(:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_2d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 2D data from NC file: double
+!*DeckYinxq: readnc_2d_text
+SUBROUTINE readnc_2d_text(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), DIMENSION(:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 2
+INTEGER :: starts(DimNum + 2), counts(DimNum + 2)
+END SUBROUTINE readnc_2d_text
+
+!===================================== 3-d =====================================
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 3D data into NC file: int1
+!*DeckYinxq: writenc_3d_int1
+SUBROUTINE writenc_3d_int1(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), DIMENSION(:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_3d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 3D data into NC file: int2
+!*DeckYinxq: writenc_3d_int2
+SUBROUTINE writenc_3d_int2(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), DIMENSION(:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_3d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 3D data into NC file: int
+!*DeckYinxq: writenc_3d_int
+SUBROUTINE writenc_3d_int(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, DIMENSION(:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_3d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 3D data into NC file: real
+!*DeckYinxq: writenc_3d_real
+SUBROUTINE writenc_3d_real(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, DIMENSION(:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_3d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 3D data into NC file: double
+!*DeckYinxq: writenc_3d_double
+SUBROUTINE writenc_3d_double(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, DIMENSION(:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_3d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 3D data into NC file: double
+!*DeckYinxq: writenc_3d_text
+SUBROUTINE writenc_3d_text(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), DIMENSION(:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 2), counts(DimNum + 2)
+END SUBROUTINE writenc_3d_text
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 3D data from NC file: int1
+!*DeckYinxq: readnc_3d_int1
+SUBROUTINE readnc_3d_int1(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), DIMENSION(:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_3d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 3D data from NC file: int2
+!*DeckYinxq: readnc_3d_int2
+SUBROUTINE readnc_3d_int2(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), DIMENSION(:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_3d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 3D data from NC file: int
+!*DeckYinxq: readnc_3d_int
+SUBROUTINE readnc_3d_int(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, DIMENSION(:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_3d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 3D data from NC file: real
+!*DeckYinxq: readnc_3d_real
+SUBROUTINE readnc_3d_real(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, DIMENSION(:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_3d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 3D data from NC file: double
+!*DeckYinxq: readnc_3d_double
+SUBROUTINE readnc_3d_double(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, DIMENSION(:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_3d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 3D data from NC file: double
+!*DeckYinxq: readnc_3d_text
+SUBROUTINE readnc_3d_text(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), DIMENSION(:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 3
+INTEGER :: starts(DimNum + 2), counts(DimNum + 2)
+END SUBROUTINE readnc_3d_text
+
+!===================================== 4-d =====================================
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 4D data into NC file: int1
+!*DeckYinxq: writenc_4d_int1
+SUBROUTINE writenc_4d_int1(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), DIMENSION(:,:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_4d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 4D data into NC file: int2
+!*DeckYinxq: writenc_4d_int2
+SUBROUTINE writenc_4d_int2(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), DIMENSION(:,:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_4d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 4D data into NC file: int
+!*DeckYinxq: writenc_4d_int
+SUBROUTINE writenc_4d_int(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, DIMENSION(:,:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_4d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 4D data into NC file: real
+!*DeckYinxq: writenc_4d_real
+SUBROUTINE writenc_4d_real(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, DIMENSION(:,:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_4d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 4D data into NC file: double
+!*DeckYinxq: writenc_4d_double
+SUBROUTINE writenc_4d_double(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE writenc_4d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Write 4D data into NC file: double
+!*DeckYinxq: writenc_4d_text
+SUBROUTINE writenc_4d_text(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), DIMENSION(:,:,:,:), INTENT(IN) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 2), counts(DimNum + 2)
+END SUBROUTINE writenc_4d_text
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 4D data from NC file: int1
+!*DeckYinxq: readnc_4d_int1
+SUBROUTINE readnc_4d_int1(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=1), DIMENSION(:,:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_4d_int1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 4D data from NC file: int2
+!*DeckYinxq: readnc_4d_int2
+SUBROUTINE readnc_4d_int2(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER(kind=2), DIMENSION(:,:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_4d_int2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 4D data from NC file: int
+!*DeckYinxq: readnc_4d_int
+SUBROUTINE readnc_4d_int(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+INTEGER, DIMENSION(:,:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_4d_int
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 4D data from NC file: real
+!*DeckYinxq: readnc_4d_real
+SUBROUTINE readnc_4d_real(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+REAL, DIMENSION(:,:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_4d_real
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 4D data from NC file: double
+!*DeckYinxq: readnc_4d_double
+SUBROUTINE readnc_4d_double(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 1), counts(DimNum + 1)
+END SUBROUTINE readnc_4d_double
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+! --- Read 4D data from NC file: double
+!*DeckYinxq: readnc_4d_text
+SUBROUTINE readnc_4d_text(ncid,VarName,Var,RecNum,locs)
+INTEGER, INTENT(IN) :: ncid
+CHARACTER(len=*), INTENT(IN) :: VarName
+CHARACTER(len=*), DIMENSION(:,:,:,:), INTENT(OUT) :: Var
+INTEGER, INTENT(IN), OPTIONAL :: RecNum
+INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: locs
+INTEGER, PARAMETER :: DimNum = 4
+INTEGER :: starts(DimNum + 2), counts(DimNum + 2)
+END SUBROUTINE readnc_4d_text
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+END MODULE netcdf_mod
+

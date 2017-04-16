@@ -1,0 +1,208 @@
+
+! =================================================================================== 
+! <<Automatically generated for Rose Fortran Separate Compilation, DO NOT MODIFY IT>> 
+! =================================================================================== 
+
+MODULE time_mod
+!-------------------------------------------------------------------------------
+! ******************************************************************************
+!-------------------------------------------------------------------------------
+!                                                Copyright (C) 2007 Xunqiang Yin
+!                                                MODULE NAME : time_mod
+!                                                OLD VERSION : 2005-11-04
+!                                                PRESENT VERSION : 2007-10-16
+!
+! --- USAGE : To convert time among different types: datestr, datevec, datenum.
+! --- DEPEND: None
+!
+! --- NOTE for describing of subroutine / function :
+!  A. The parameters bracketed with [], means optional parameter.
+!  B. The describe for the parameters of subroutine / function, started with:
+!   * It means input prameter;
+!   # It means output prameter;
+!   @ It means input and output prameter(it will be changed inside).
+!
+!-------------------------------------------------------------------------------
+! ******************************************************************************
+! ***                       INTERFACE DESCRIBE                               ***
+! ******************************************************************************
+!-------------------------------------------------------------------------------
+!
+!  1. datenum : Get the date in a double precision number.
+!
+!     datenum(year, month, day, hour, minute, second)
+!     datenum(datev[, flag])
+!
+!    # datenum      = a double precision number --- the counted time from
+!                     reference_date. (in days, hours, minutes or seconds)
+!    * datev   = a vector contains : yyyy, mm, dd, HH, MM, SS.
+!    * flag = the unit type for datenum ( 1 = days, 2 = hours,
+!                              3 = minutes & 4 = seconds.)
+!
+!-------------------------------------------------------------------------------
+!
+!  2. datevec : Get the date in a vector.
+!
+!     datevec(daten[, flag])
+!
+!    # datevec      = a vector contains : yyyy, mm, dd, HH, MM, SS.
+!    * daten   = a double precision number --- the counted time from
+!                     reference_date. (in days, hours, minutes or seconds)
+!    * flag = the unit type for datenum ( 1 = days, 2 = hours,
+!                              3 = minutes & 4 = seconds.)
+!
+!-------------------------------------------------------------------------------
+!
+!  3. datestr : Get the date in a string.
+!
+!     datestr(datev)
+!     datestr(daten)
+!
+!    # datestr      = a string contains a date with the formate of datestr_form.
+!    * datev   = a vector contains : yyyy, mm, dd, HH, MM, SS.
+!    * daten   = a double precision number --- the counted time from
+!                     reference_date. (in days, hours, minutes or seconds)
+!
+!
+!-------------------------------------------------------------------------------
+!
+!  4. init_time_mod : Initialize for time_mod (Set refference date for counting).
+!
+!     init_time_mod(reference_date_in)
+!
+!   * reference_date_in = New refference date for count. Default is
+!                         [0, 0, 0, 0, 0, 0] (0000-00-00 00:00:00).
+!
+!                                     --- Written by Xunqiang Yin, 2007-10-16
+!
+!
+!-------------------------------------------------------------------------------
+!
+! --- For leap year 0, it should check 03.01, some time it will add 1 more day.
+!                                                --- Xunqiang Yin, 2007-12-06
+!
+!-------------------------------------------------------------------------------
+public dtime_now,datestr,datevec,datenum,init_time_mod
+private datenum_days
+private 
+!-------------------------------------------------------------------------------
+INTERFACE datenum
+MODULE PROCEDURE datenum1
+MODULE PROCEDURE datenum2
+MODULE PROCEDURE datenum3
+END INTERFACE 
+!-------------------------------------------------------------------------------
+INTERFACE datestr
+MODULE PROCEDURE datestr0
+MODULE PROCEDURE datestr1
+END INTERFACE 
+!-------------------------------------------------------------------------------
+INTERFACE datevec
+MODULE PROCEDURE datevec0
+MODULE PROCEDURE datevec1
+END INTERFACE 
+!-------------------------------------------------------------------------------
+INTEGER, DIMENSION(12), PARAMETER, PRIVATE :: mon_days = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+INTEGER, DIMENSION(6), PRIVATE :: datev_default = (/0,0,0,0,0,0/)
+!-------------------------------------------------------------------------------
+CONTAINS
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: init_date_func_mod
+SUBROUTINE init_time_mod(datev)
+INTEGER, DIMENSION(6), INTENT(IN) :: datev
+END SUBROUTINE init_time_mod
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: datenum
+DOUBLE PRECISION FUNCTION datenum3(year,month,day,hour,minute,second)
+INTEGER, INTENT(IN) :: year, month, day, hour, minute, second
+!-------------------------------------------------------------------------------
+END  FUNCTION datenum3
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: datenum
+DOUBLE PRECISION FUNCTION datenum2(datev)
+INTEGER, DIMENSION(6), INTENT(IN) :: datev
+!-------------------------------------------------------------------------------
+END  FUNCTION datenum2
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: datenum
+DOUBLE PRECISION FUNCTION datenum1(datev,flag)
+INTEGER, INTENT(IN) :: datev(6), flag
+!-------------------------------------------------------------------------------
+END  FUNCTION datenum1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: datenum_days
+DOUBLE PRECISION FUNCTION datenum_days(datev)
+INTEGER, DIMENSION(6), INTENT(IN) :: datev
+!-------------------------------------------------------------------------------
+INTEGER :: leap, year, mon, flag
+!-------------------------------------------------------------------------------
+END  FUNCTION datenum_days
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: datevec1
+ FUNCTION datevec1(daten,flag)
+DOUBLE PRECISION, INTENT(IN) :: daten
+INTEGER, INTENT(IN) :: flag
+INTEGER, DIMENSION(6) :: datevec1
+!-------------------------------------------------------------------------------
+END  FUNCTION datevec1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: datevec0
+ FUNCTION datevec0(daten)
+DOUBLE PRECISION, INTENT(IN) :: daten
+INTEGER, DIMENSION(6) :: datevec0
+INTEGER :: rest_days, daysFeb
+DOUBLE PRECISION :: time_in_1day, daten1
+INTEGER(kind=4) :: dseconds
+!-------------------------------------------------------------------------------
+END  FUNCTION datevec0
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: datestr
+CHARACTER(len=14) FUNCTION datestr0(datev)
+INTEGER, DIMENSION(6), INTENT(IN) :: datev
+!-------------------------------------------------------------------------------
+END  FUNCTION datestr0
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: datestr1
+CHARACTER(len=14) FUNCTION datestr1(daten)
+DOUBLE PRECISION, INTENT(IN) :: daten
+INTEGER, DIMENSION(6) :: datev
+!-------------------------------------------------------------------------------
+END  FUNCTION datestr1
+
+!-------------------------------------------------------------------------------
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+!-------------------------------------------------------------------------------
+!*DeckYinxq: dtime_now
+DOUBLE PRECISION FUNCTION dtime_now()
+INTEGER, DIMENSION(8) :: val
+END  FUNCTION dtime_now
+
+!-------------------------------------------------------------------------------
+END MODULE time_mod
+
